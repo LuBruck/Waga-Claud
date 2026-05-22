@@ -1,30 +1,105 @@
-# Roadmap — Cloud Dashboard
+# Roadmap — WagaClaud (versão Spring Boot)
 
-> Documento interno de planejamento. Última atualização: 18/05/2026
+> Documento interno de planejamento. Última atualização: 22/05/2026
 > Pode (e deve) ser alterado conforme o projeto evolui.
+> **Entrega final: 16/06/2026.** Início: 24/05/2026 (~3,5 semanas).
 
 ---
 
-## Equipe
+## Stack e decisões de arquitetura
 
-| Apelido  | Foco principal                        |
-|----------|---------------------------------------|
-| Bruck    | Arquitetura, Services, Git, review    |
-| Maju     | Telas Swing (JFrame/JDialog), design  |
-| Marcelo  | Entidades filhas, DAOs, dados mock    |
+| Item | Escolha |
+|------|---------|
+| Linguagem | Java 21 (LTS) |
+| Framework | Spring Boot 3.x |
+| Build | Maven (`pom.xml`) — gerado pelo Spring Initializr |
+| IDE | VS Code (+ "Extension Pack for Java" e "Spring Boot Extension Pack") |
+| Banco (desenvolvimento) | PostgreSQL — database `wagaclaud_dev` (pode quebrar à vontade) |
+| Banco (definitivo) | PostgreSQL — database `wagaclaud` (populado pra demonstração/entrega) |
+| Front | HTML + CSS puro (gerado por IA), JavaScript `fetch` pra consumir a API |
+
+### Camadas (a "regra de ouro" continua valendo)
+
+O sistema mantém a separação em camadas do projeto Swing, só com nomes novos:
+
+```
+Front (HTML/CSS/JS)
+   ↓ HTTP (fetch)
+Controller (@RestController — expõe a API REST)
+   ↓ chama
+Service (@Service — lógica de negócio: validação, permissão, orquestração)
+   ↓ usa (injetado via @Autowired)
+Repository (interface extends JpaRepository — persistência)
+   ↓ persiste
+Model (@Entity — entidades JPA)
+```
+
+**Regra de ouro:** nenhuma camada pula a vizinha. O Controller NUNCA chama o Repository
+direto — sempre passa pelo Service. O Service NUNCA monta JSON nem lida com HTTP — isso é
+trabalho do Controller.
+
+### Decisões JPA já fechadas
+
+- **Herança:** `@Inheritance(strategy = InheritanceType.JOINED)` na classe `Recurso`.
+  Vira uma tabela-mãe `recurso` + tabelas filhas `virtual_machine` e `armazenamento`
+  ligadas por chave estrangeira. Modelo relacional normalizado (sem colunas NULL sobrando).
+- **Repositories separados por entidade concreta** (não um genérico). Cada um pode ter suas
+  queries próprias — ex: `findByVmAnexadaIsNull()` pra buscar discos soltos, que um
+  repository genérico de `Recurso` não conseguiria declarar.
+- **Sem DTO** nesta versão. Os Controllers retornam as entidades direto (decisão de
+  simplicidade — pode evoluir depois se sobrar tempo).
+- **Dois ambientes via profiles do Spring** (mesmo código, configs diferentes):
+  - `application-dev.properties` → database `wagaclaud_dev`, `ddl-auto=update` (o JPA
+    cria/ajusta as tabelas sozinho conforme as entidades mudam — cômodo durante o dev).
+  - `application-prod.properties` → database `wagaclaud`, `ddl-auto=validate` (o JPA só
+    confere que as tabelas batem com as entidades, sem mexer — o banco definitivo não se
+    reconfigura sozinho).
+  - Troca de ambiente: `--spring.profiles.active=dev` ou `prod` ao rodar. O Java não muda.
+- **Dados iniciais:** classe `DataLoader` (implements `CommandLineRunner`) substitui o antigo
+  `DadosMock`. Popula o banco ao subir o app.
+
+> **Nota importante:** a camada Model (entidades, herança, relações) é praticamente igual
+> à do projeto Swing. O que mudou foi tudo em volta. Quem entendeu o modelo antigo já
+> entende 80% deste.
+
+---
+
+## Equipe e divisão por feature
+
+Diferente do roadmap antigo (que dividia por camada), aqui cada um é dono de uma **feature
+ponta-a-ponta**: faz Model → Repository → Service → Controller → ligação no front da sua
+fatia. Isso ajuda no aprendizado (cada um vê o sistema inteiro funcionando) e é a forma
+mais natural de dividir num time pequeno com prazo curto.
+
+| Apelido | Feature (ponta-a-ponta) | Papel extra |
+|---------|--------------------------|-------------|
+| **Bruck** | **Autenticação** — `Usuario`, login, cadastro, permissão | Âncora: faz o setup inicial, entrega as classes-base (`Recurso`, `Usuario`), revisa PRs e cuida da integração final |
+| **Maju** | **Recursos** — `VirtualMachine` + `Armazenamento`, criar/listar/deletar, anexar/desanexar disco | — |
+| **Marcelo** | **Monitoramento** — `Monitoramento`, métricas fake, listar críticos | — |
+
+### Dependência crítica entre as features
+
+As features de Maju (Recursos) e Marcelo (Monitoramento) **dependem da classe `Recurso`**
+(abstrata) e de `Usuario`, que são da feature do Bruck. Por isso o Bruck precisa entregar
+essas duas classes-base **logo no início da Semana 1**, antes de tudo. Enquanto isso, Maju
+e Marcelo adiantam o que dá (estrutura, enums, esqueleto das próprias classes).
+
+Trabalho majoritariamente remoto, com syncs nas aulas de POO2.
 
 ---
 
 ## Workflow Git
+
+Mantém o mesmo fluxo do projeto Swing — funcionou bem e a equipe já conhece.
 
 ### Branches
 
 ```
 main          ← só código testado e funcional (nunca commita direto aqui)
   └── develop ← branch de integração (merges das features vão pra cá)
-        ├── feat/model-usuario
-        ├── feat/dao-recurso
-        ├── feat/tela-login
+        ├── feat/auth-model-usuario
+        ├── feat/recursos-vm
+        ├── feat/monit-service
         └── ...
 ```
 
@@ -34,30 +109,36 @@ main          ← só código testado e funcional (nunca commita direto aqui)
 - Quando a feature tá pronta, abre um **Pull Request** (PR) para `develop`.
 - Todo PR precisa de no mínimo **1 reviewer** (de preferência o Bruck).
 - Depois que o reviewer aprova, o autor do PR faz o merge.
-- A `main` só recebe merge da `develop` nos marcos de entrega (final de cada semana).
+- A `main` só recebe merge da `develop` nos marcos de entrega (fim de cada semana).
 
-### Fluxo diário
+### Convenção de nomes de branch
+
+Como agora a divisão é por feature, vale prefixar a branch com a feature pra organizar:
 
 ```
-1. git checkout develop
-2. git pull origin develop
-3. git checkout -b feat/minha-tarefa      ← cria branch nova
-4. ... codar, testar ...
-5. git add .
-6. git commit -m "feat: descricao curta"
-7. git push origin feat/minha-tarefa
-8. Abrir PR no GitHub: feat/minha-tarefa → develop
-9. Avisar no grupo pra alguém revisar
+feat/auth-...      → tarefas do Bruck (autenticação)
+feat/recursos-...  → tarefas da Maju
+feat/monit-...     → tarefas do Marcelo
+feat/setup-...     → infra/configuração
+feat/front-...     → telas e integração
 ```
 
 ### Padrão de commits
 
 ```
-feat: criar classe Usuario com enum NivelAcesso
-feat: implementar UsuarioDAOMemoria
-fix: corrigir buscarPorEmail retornando null
-refactor: extrair validação de senha pro service
+feat: criar entidade Usuario com anotacoes JPA
+feat: adicionar endpoint POST /api/login
+fix: corrigir findByEmail retornando Optional vazio
+refactor: extrair validacao de senha pro service
 ```
+
+### O que vai pro Git
+
+VAI: `pom.xml`, `src/`, `docs/`, `README.md`, `ROADMAP.md`, `CLAUDE.md`, `.gitignore`,
+os arquivos do front (`.html`, `.css`, `.js`)
+
+NÃO VAI (.gitignore cuida): `target/`, `.vscode/` (configs pessoais), `*.class`,
+`application-prod.properties` se tiver senha do banco real (usar variável de ambiente)
 
 ### Resolução de conflitos
 
@@ -70,291 +151,431 @@ Se o `git pull` ou o PR acusar conflito:
 
 ---
 
-## Estrutura de pacotes (NetBeans)
+## Estrutura de pacotes (Spring Boot / Maven)
+
+Package raiz: `com.wagaclaud`. Estrutura gerada pelo Spring Initializr e organizada por camada.
 
 ```
-src/
-  └── com.clouddashboard/
-        ├── model/
-        │     ├── enums/
-        │     │     ├── NivelAcesso.java
-        │     │     ├── StatusRecurso.java
-        │     │     └── TipoDisco.java
-        │     ├── Usuario.java
-        │     ├── Recurso.java          (abstract)
-        │     ├── VirtualMachine.java   (extends Recurso)
-        │     ├── Armazenamento.java    (extends Recurso)
-        │     └── Monitoramento.java
-        ├── dao/
-        │     ├── UsuarioDAO.java          (interface)
-        │     ├── RecursoDAO.java          (interface)
-        │     ├── MonitoramentoDAO.java    (interface)
-        │     ├── UsuarioDAOMemoria.java
-        │     ├── RecursoDAOMemoria.java
-        │     └── MonitoramentoDAOMemoria.java
-        ├── service/
-        │     ├── AutenticacaoService.java
-        │     ├── RecursoService.java
-        │     └── MonitoramentoService.java
-        ├── view/
-        │     ├── TelaLogin.java
-        │     ├── TelaCadastro.java
-        │     ├── TelaDashboard.java
-        │     ├── PainelVMs.java
-        │     ├── PainelStorage.java
-        │     ├── PainelMonitoramento.java
-        │     ├── TelaGerenciarUsuarios.java
-        │     ├── DialogCriarVM.java
-        │     └── DialogCriarStorage.java
-        └── util/
-              └── DadosMock.java
+WagaClaud/                              ← raiz do repositório
+  ├── src/
+  │     ├── main/
+  │     │     ├── java/
+  │     │     │     └── com/wagaclaud/
+  │     │     │           ├── WagaCloudApplication.java   ← @SpringBootApplication (main)
+  │     │     │           ├── model/
+  │     │     │           │     ├── enums/
+  │     │     │           │     │     ├── NivelAcesso.java
+  │     │     │           │     │     ├── StatusRecurso.java
+  │     │     │           │     │     └── TipoDisco.java
+  │     │     │           │     ├── Usuario.java          (@Entity)
+  │     │     │           │     ├── Recurso.java          (@Entity, abstract, JOINED)
+  │     │     │           │     ├── VirtualMachine.java   (@Entity, extends Recurso)
+  │     │     │           │     ├── Armazenamento.java    (@Entity, extends Recurso)
+  │     │     │           │     └── Monitoramento.java    (@Entity)
+  │     │     │           ├── repository/
+  │     │     │           │     ├── UsuarioRepository.java          (interface)
+  │     │     │           │     ├── VirtualMachineRepository.java   (interface)
+  │     │     │           │     ├── ArmazenamentoRepository.java    (interface)
+  │     │     │           │     └── MonitoramentoRepository.java    (interface)
+  │     │     │           ├── service/
+  │     │     │           │     ├── AutenticacaoService.java
+  │     │     │           │     ├── RecursoService.java
+  │     │     │           │     └── MonitoramentoService.java
+  │     │     │           ├── controller/
+  │     │     │           │     ├── AuthController.java
+  │     │     │           │     ├── RecursoController.java
+  │     │     │           │     └── MonitoramentoController.java
+  │     │     │           └── config/
+  │     │     │                 └── DataLoader.java       ← popula dados iniciais
+  │     │     └── resources/
+  │     │           ├── application.properties            ← config comum
+  │     │           ├── application-dev.properties         ← H2 (desenvolvimento)
+  │     │           ├── application-prod.properties        ← PostgreSQL (produção)
+  │     │           └── static/                            ← FRONT mora aqui
+  │     │                 ├── index.html
+  │     │                 ├── css/
+  │     │                 └── js/
+  │     └── test/                                          ← testes (opcional p/ este projeto)
+  ├── docs/                              ← diagramas (.asta), imagens
+  ├── target/                           ← build do Maven (NÃO vai pro Git)
+  ├── pom.xml                           ← config Maven + dependências
+  ├── README.md
+  ├── ROADMAP.md                        ← este arquivo
+  ├── CLAUDE.md
+  └── .gitignore
 ```
+
+### Por que o front fica em `resources/static/`?
+
+O Spring Boot serve automaticamente qualquer arquivo dentro de `static/` direto pela web.
+Coloca o `index.html` lá e ele aparece em `http://localhost:8080/`. O JavaScript desse HTML
+chama os endpoints (`fetch('/api/recursos')`) — front e back rodam no **mesmo servidor**,
+o que mata o problema de CORS e simplifica muito a integração. É a opção mais simples pra
+um projeto de faculdade.
+
+### Dependências do `pom.xml` (escolhidas no Spring Initializr)
+
+- **Spring Web** — pra criar os `@RestController`
+- **Spring Data JPA** — pros Repositories e o mapeamento das entidades
+- **PostgreSQL Driver** — pra conectar no banco
+- **Spring Boot DevTools** (opcional) — reinicia o app sozinho quando você salva (acelera o dev)
 
 ---
 
-## Semana 0 — Setup (Dias 1–3)
+## Semana 0 — Setup (24/05 – 26/05)
 
-**Objetivo:** Todos com ambiente rodando, repo clonado, estrutura de pacotes criada, enums prontos.
+**Objetivo:** todo mundo com o ambiente rodando, repo clonado, projeto Spring Boot subindo
+em `localhost:8080`, e a estrutura de pacotes criada. Ninguém escreve lógica ainda — é só
+deixar o terreno pronto.
 
 ### O que fazer
 
-1. **Bruck** cria o repositório no GitHub, adiciona Maju e Marcelo como colaboradores, cria as branches `main` e `develop`, e faz o commit inicial com a estrutura de pacotes vazia.
-2. **Maju e Marcelo** instalam o JDK + NetBeans, clonam o repo, e testam que compila.
-3. **Bruck** faz um mini-tutorial de Git pros dois (clone, branch, commit, push, PR) — pode ser por call ou presencial na aula.
-4. **Qualquer um** cria os 3 enums como primeira tarefa prática no Git (serve de treino pra abrir a primeira branch e PR).
+1. **Bruck** gera o projeto no Spring Initializr (`start.spring.io`):
+   - Project: **Maven** · Language: **Java** · Spring Boot: **3.x** · Java: **21**
+   - Group: `com.wagaclaud` · Artifact: `wagaclaud`
+   - Dependências: **Spring Web**, **Spring Data JPA**, **PostgreSQL Driver**,
+     **Spring Boot DevTools**
+   - Baixa o `.zip`, descompacta, cria a estrutura de pacotes (model, repository, service,
+     controller, config), configura os profiles `dev` e `prod`, e sobe tudo pro GitHub com
+     `main` e `develop` criadas.
+2. **Maju e Marcelo** instalam o **JDK 21**, o **VS Code** + extensões ("Extension Pack for
+   Java" e "Spring Boot Extension Pack"), clonam o repo e abrem no VS Code.
+3. **Cada um** instala o **PostgreSQL** na própria máquina e cria os dois databases:
+   `wagaclaud_dev` (pra desenvolver) e `wagaclaud` (definitivo). Pode usar o pgAdmin (vem
+   junto) ou o comando `CREATE DATABASE wagaclaud_dev;`.
+4. **Cada um** roda `mvn spring-boot:run` (perfil dev) e confirma que o app sobe conectando
+   no PostgreSQL e que `http://localhost:8080` responde (mesmo que seja a página de erro
+   padrão do Spring — o que importa é o servidor estar de pé E conectado no banco).
+5. **Bruck** faz um mini-tutorial rápido pros dois: como rodar o projeto no VS Code, onde
+   ficam os pacotes, e o fluxo de Git (branch → commit → push → PR). Pode ser por call.
+6. **Qualquer um** cria os 3 enums (`NivelAcesso`, `StatusRecurso`, `TipoDisco`) como
+   primeira tarefa prática — serve de treino pra abrir a primeira branch e o primeiro PR.
+   Enums não mudam em relação ao projeto antigo.
 
 ### Branches dessa fase
 
-| Branch                | Quem    | O que faz                                          |
-|-----------------------|---------|----------------------------------------------------|
-| `feat/setup-projeto`  | Bruck   | Estrutura de pacotes + .gitignore + README inicial  |
-| `feat/enums`          | Qualquer| NivelAcesso, StatusRecurso, TipoDisco               |
+| Branch | Quem | O que faz |
+|--------|------|-----------|
+| `feat/setup-projeto` | Bruck | Projeto do Initializr + estrutura de pacotes + `.gitignore` + profiles `dev`/`prod` + README inicial |
+| `feat/setup-enums` | Qualquer | `NivelAcesso`, `StatusRecurso`, `TipoDisco` |
 
-### Marco de entrega (fim do dia 3)
+### Configuração dos profiles PostgreSQL
+
+`application-dev.properties` (banco de desenvolvimento):
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/wagaclaud_dev
+spring.datasource.username=postgres
+spring.datasource.password=SUA_SENHA_LOCAL
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+```
+
+`application-prod.properties` (banco definitivo):
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/wagaclaud
+spring.datasource.username=postgres
+spring.datasource.password=SUA_SENHA_LOCAL
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+> `ddl-auto=update` no dev deixa o JPA criar/ajustar as tabelas conforme você muda as
+> entidades — cômodo enquanto o modelo ainda está mudando. No definitivo, `validate` só
+> confere que tudo bate, sem mexer no banco.
+> **Atenção à senha:** não commite a senha real. Cada um usa a senha do seu PostgreSQL local;
+> pra entrega, pode usar variável de ambiente ou deixar documentado no README como configurar.
+
+### Marco de entrega (fim do dia 26/05)
 
 - [ ] Todos clonaram e fizeram pelo menos 1 commit + PR
-- [ ] Enums estão na `develop`
-- [ ] Projeto compila no NetBeans de todos
+- [ ] PostgreSQL instalado e os dois databases criados em todas as máquinas
+- [ ] `mvn spring-boot:run` sobe o app conectando no PostgreSQL na máquina de todo mundo
+- [ ] `localhost:8080` responde em todas as máquinas
+- [ ] Os 3 enums estão na `develop`
 
 ---
 
-## Semana 1 — Model + DAO (Dias 4–10)
+## Semana 1 — Fundação + features começando (27/05 – 02/06)
 
-**Objetivo:** Todas as entidades e DAOs em memória prontos e testados via `main()`.
+**Objetivo:** Model + Repository + Service das três features prontos e testados. Ao fim da
+semana, a lógica de negócio inteira funciona — falta só expor via REST (Controller) e ligar
+no front, que é a Semana 2.
 
-### Tarefas detalhadas
+**Ritmo agressivo de propósito:** como o prazo é curto, empilhamos as 3 camadas internas
+nesta semana. Por isso a ordem importa muito — siga a dependência abaixo.
 
-#### Bruck
+### A dependência crítica (leia antes de começar)
 
-| Branch                    | Tarefa                                                         | Depende de    |
-|---------------------------|----------------------------------------------------------------|---------------|
-| `feat/model-recurso`      | Classe `Recurso` (abstrata): id, nome, status, dataCriacao, dono (Usuario), getResumo() abstrato | enums         |
-| `feat/dao-interfaces`     | Interfaces `UsuarioDAO`, `RecursoDAO`, `MonitoramentoDAO`      | model-recurso |
-| `feat/dao-usuario-memoria`| `UsuarioDAOMemoria` com HashMap static                         | dao-interfaces|
+`Recurso` (abstrata) e `Usuario` são a base de tudo. O **Bruck entrega essas duas primeiro**
+(meta: até 28/05). Enquanto isso, Maju e Marcelo adiantam o que não depende delas. Assim que
+caírem na `develop`, todos seguem em paralelo.
 
-**Obs:** Bruck faz `Recurso` primeiro porque Maju e Marcelo dependem dele pra fazer as classes filhas. Priorizar essa entrega até o dia 5.
+```
+Bruck: Usuario + Recurso  ──┬──► Maju: VirtualMachine + Armazenamento
+   (entregar até 28/05)     └──► Marcelo: Monitoramento
+```
 
-#### Maju
+### Bruck — feature Autenticação (+ classes-base)
 
-| Branch                    | Tarefa                                                         | Depende de     |
-|---------------------------|----------------------------------------------------------------|----------------|
-| `feat/model-usuario`      | Classe `Usuario`: id, nome, email, senha, nivelAcesso          | enums          |
-| `feat/model-vm`           | Classe `VirtualMachine extends Recurso`: qtdCpu, memoriaRamGB, SO, iniciar(), parar(), getResumo() | model-recurso (Bruck) |
-| `feat/dao-recurso-memoria`| `RecursoDAOMemoria` com HashMap static                         | dao-interfaces (Bruck)|
+| Branch | Tarefa | Depende de |
+|--------|--------|------------|
+| `feat/auth-model-usuario` | `Usuario` (@Entity): id, nome, email, senha, nivelAcesso (@Enumerated) | enums |
+| `feat/auth-model-recurso` | `Recurso` (@Entity, abstract, @Inheritance JOINED): id, nome, status, dataCriacao, dono (@ManyToOne Usuario), abstract getResumo() | enums |
+| `feat/auth-repository` | `UsuarioRepository extends JpaRepository<Usuario, Integer>` com `findByEmail` | model-usuario |
+| `feat/auth-service` | `AutenticacaoService` (@Service): login(email, senha), cadastrar(Usuario), temPermissao(Usuario, acao). Recebe o repository via @Autowired. | auth-repository |
 
-#### Marcelo
+> **Prioridade:** os dois primeiros (`model-usuario` e `model-recurso`) vêm antes de tudo —
+> são o que destrava Maju e Marcelo. Repository e Service do Bruck vêm depois.
 
-| Branch                    | Tarefa                                                         | Depende de     |
-|---------------------------|----------------------------------------------------------------|----------------|
-| `feat/model-armazenamento`| Classe `Armazenamento extends Recurso`: capacidadeGB, usadoGB, tipoDisco, vmAnexada (pode ser null), expandir(), reduzir(), getResumo() | model-recurso (Bruck) |
-| `feat/model-monitoramento`| Classe `Monitoramento`: id, recurso, metrica, valor, timestamp, isCritico(), getValorFormatado() | model-recurso (Bruck) |
-| `feat/dao-monit-memoria`  | `MonitoramentoDAOMemoria` com HashMap static                   | dao-interfaces (Bruck)|
+### Maju — feature Recursos
+
+| Branch | Tarefa | Depende de |
+|--------|--------|------------|
+| `feat/recursos-model-vm` | `VirtualMachine extends Recurso` (@Entity): qtdCpu, memoriaRamGB, SO, @OneToMany discos, iniciar(), parar(), getResumo() | model-recurso (Bruck) |
+| `feat/recursos-model-armazenamento` | `Armazenamento extends Recurso` (@Entity): capacidadeGB, usadoGB, tipoDisco, @ManyToOne vmAnexada, expandir(), reduzir(), getResumo() | model-recurso (Bruck) |
+| `feat/recursos-repository` | `VirtualMachineRepository` (findByDono, findByStatus) + `ArmazenamentoRepository` (findByDono, findByVmAnexadaIsNull) | os 2 models acima |
+| `feat/recursos-service` | `RecursoService` (@Service): criarVM (já cria o disco padrão), criarStorage, anexarDisco, desanexarDisco, listarRecursos, deletarRecurso. @Autowired dos 2 repositories. Validações básicas. | recursos-repository |
+
+> **Enquanto espera o Bruck:** Maju pode estudar como funciona herança no JPA e deixar o
+> esqueleto das classes pronto (atributos, getters/setters) — só falta o `extends Recurso`
+> compilar quando a base chegar.
+
+### Marcelo — feature Monitoramento
+
+| Branch | Tarefa | Depende de |
+|--------|--------|------------|
+| `feat/monit-model` | `Monitoramento` (@Entity): id, recurso (@ManyToOne), metrica, valor, timestamp (LocalDateTime), isCritico(), getValorFormatado() | model-recurso (Bruck) |
+| `feat/monit-repository` | `MonitoramentoRepository`: findByRecursoId, findByValorGreaterThan | monit-model |
+| `feat/monit-service` | `MonitoramentoService` (@Service): gerarMetricasFake(Recurso) cria ~10 registros aleatórios (CPU 10-95%, RAM 20-80%), listarPorRecurso, listarCriticos. @Autowired do repository. | monit-repository |
+| `feat/setup-dataloader` | `DataLoader` (implements CommandLineRunner): popula o banco ao subir — 1 admin (admin@cloud.com / 123), 2 usuários comuns, 3 VMs (cada uma com disco padrão), 1 disco solto. Substitui o antigo DadosMock. | services prontos |
+
+> **Enquanto espera o Bruck:** Marcelo pode adiantar o estudo do `CommandLineRunner` e
+> rascunhar quais dados o `DataLoader` vai inserir.
 
 ### Ordem de merges na develop
 
 ```
-1. feat/model-usuario        (Maju - sem dependência)
-2. feat/model-recurso        (Bruck - depende dos enums)
-3. feat/model-vm             (Maju - depende de Recurso)
-4. feat/model-armazenamento  (Marcelo - depende de Recurso)
-5. feat/model-monitoramento  (Marcelo - depende de Recurso)
-6. feat/dao-interfaces       (Bruck)
-7. feat/dao-usuario-memoria  (Bruck)
-8. feat/dao-recurso-memoria  (Maju)
-9. feat/dao-monit-memoria    (Marcelo)
+1. feat/auth-model-usuario          (Bruck)
+2. feat/auth-model-recurso          (Bruck — destrava Maju e Marcelo)
+3. feat/recursos-model-vm           (Maju)
+4. feat/recursos-model-armazenamento(Maju)
+5. feat/monit-model                 (Marcelo)
+6. feat/auth-repository             (Bruck)
+7. feat/recursos-repository         (Maju)
+8. feat/monit-repository            (Marcelo)
+9. feat/auth-service                (Bruck)
+10. feat/recursos-service           (Maju)
+11. feat/monit-service              (Marcelo)
+12. feat/setup-dataloader           (Marcelo — por último, precisa dos services)
 ```
 
-### Marco de entrega (fim do dia 10)
+### Como testar sem Controller ainda
 
-- [ ] Todas as classes model compilam e têm getters/setters
-- [ ] Todos os DAOs em memória implementam suas interfaces
-- [ ] Existe um `main()` de teste que: cria usuários, cria VMs, cria storages, faz busca por id/email, lista todos, deleta, e printa os resultados
-- [ ] Tudo mergeado na `develop`
+Como ainda não tem API, dá pra validar a lógica de dois jeitos:
+1. Subir o app (perfil dev) e olhar as tabelas no **pgAdmin** (ou outro cliente PostgreSQL)
+   — confirmar que as tabelas `recurso`, `virtual_machine`, `armazenamento`, `usuario`,
+   `monitoramento` foram criadas e que o `DataLoader` inseriu os dados.
+2. Colocar logs temporários no `DataLoader` (ex: `System.out.println` chamando
+   `recursoService.listarRecursos(...)`) pra ver os Services respondendo.
+
+### Marco de entrega (fim do dia 02/06)
+
+- [ ] Todas as entidades JPA mapeadas — tabelas criadas corretamente no PostgreSQL
+- [ ] Herança JOINED funcionando (tabela `recurso` + filhas ligadas por FK)
+- [ ] Os 4 repositories declarados e injetáveis
+- [ ] Os 3 services com a lógica de negócio implementada
+- [ ] `DataLoader` popula o banco ao iniciar o app
+- [ ] Dá pra confirmar os dados no pgAdmin
 
 ---
 
-## Semana 2 — Services + Tela de Login (Dias 11–17)
+## Semana 2 — API REST completa (03/06 – 09/06)
 
-**Objetivo:** Camada de lógica de negócio pronta + primeira tela funcional (login).
+**Objetivo:** expor as três features via `@RestController`. Ao fim da semana, a API inteira
+responde JSON e foi testada — sem front ainda. O front só começa quando TODO o back estiver
+pronto e testado (decisão da equipe: evita ligar tela em endpoint que não existe).
 
-### Tarefas detalhadas
+Cada um expõe a própria feature. Como os Services já estão prontos (Semana 1), o Controller
+é uma camada fina: recebe o request, chama o Service, devolve o resultado. Pouca lógica nova
+— a parte difícil já foi feita.
 
-#### Bruck
+### Bruck — AuthController
 
-| Branch                       | Tarefa                                                              | Depende de |
-|------------------------------|---------------------------------------------------------------------|------------|
-| `feat/service-autenticacao`  | `AutenticacaoService`: login(email, senha), cadastrar(Usuario), temPermissao(Usuario, String). Login busca por email no DAO e compara senha. | DAOs prontos |
-| `feat/service-recurso`       | `RecursoService`: criarVM(...), criarStorage(...), anexarDisco(Armazenamento, VM), desanexarDisco(Armazenamento), listarRecursos(Usuario), deletarRecurso(int id). Validações básicas (campos não-vazios, CPU > 0, etc). | DAOs prontos |
+| Branch | Endpoints | Depende de |
+|--------|-----------|------------|
+| `feat/auth-controller` | `POST /api/login` (recebe email+senha, chama AutenticacaoService.login) · `POST /api/cadastro` (chama cadastrar) | auth-service |
 
-#### Maju
+### Maju — RecursoController
 
-| Branch                  | Tarefa                                                                    | Depende de              |
-|-------------------------|---------------------------------------------------------------------------|-------------------------|
-| `feat/tela-login`       | `TelaLogin.java` (JFrame): campos email e senha, botão "Entrar", botão "Cadastrar". Chama `AutenticacaoService.login()`. Se sucesso → abre `TelaDashboard`. Se falha → JOptionPane de erro. | service-autenticacao (Bruck) |
-| `feat/tela-cadastro`    | `TelaCadastro.java` (JFrame): form com nome, email, senha, confirmar senha. Chama `AutenticacaoService.cadastrar()`. Se sucesso → volta pra TelaLogin. | service-autenticacao (Bruck) |
+| Branch | Endpoints | Depende de |
+|--------|-----------|------------|
+| `feat/recursos-controller` | `GET /api/recursos` (lista do usuário) · `POST /api/vms` (criarVM) · `POST /api/storages` (criarStorage) · `PUT /api/discos/anexar` · `PUT /api/discos/desanexar` · `DELETE /api/recursos/{id}` | recursos-service |
 
-**Obs:** Maju pode começar montando o layout visual das telas (arrastar componentes no NetBeans) enquanto espera o Service do Bruck. Quando o Service estiver pronto, ela só conecta os botões.
+### Marcelo — MonitoramentoController
 
-#### Marcelo
+| Branch | Endpoints | Depende de |
+|--------|-----------|------------|
+| `feat/monit-controller` | `GET /api/monitoramento/{recursoId}` (lista métricas do recurso) · `POST /api/monitoramento/gerar` (gera métricas fake) · `GET /api/monitoramento/criticos` | monit-service |
 
-| Branch                  | Tarefa                                                                    | Depende de   |
-|-------------------------|---------------------------------------------------------------------------|--------------|
-| `feat/dados-mock`       | Classe `DadosMock.java`: método estático `inicializar()` que popula os DAOs com dados pré-criados. Pelo menos: 1 admin, 2 usuários comuns, 3 VMs (distribuídas entre os usuários), 2 storages (1 anexado numa VM, 1 solto). | DAOs prontos |
-| `feat/service-monitoramento` | `MonitoramentoService`: gerarMetricasFake(Recurso) que cria 10 registros aleatórios (CPU 10-95%, RAM 20-80%), listarPorRecurso(int id), listarCriticos(). | DAOs prontos |
+### Como testar cada endpoint (sem front)
+
+Use a extensão **REST Client** do VS Code (cria um arquivo `.http` e dispara requests direto
+do editor) ou o navegador pros endpoints `GET`. Exemplo de teste:
+
+```http
+### Testar login
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{ "email": "admin@cloud.com", "senha": "123" }
+
+### Listar recursos (o usuarioId vem do login — ver nota abaixo)
+GET http://localhost:8080/api/recursos?usuarioId=1
+```
+
+**Regra da semana:** um endpoint só é considerado "pronto" quando alguém disparou o request
+e viu o JSON correto voltar. Anota os endpoints testados num checklist no grupo.
 
 ### Ordem de merges na develop
 
 ```
-1. feat/service-autenticacao   (Bruck - desbloqueia telas da Maju)
-2. feat/service-recurso        (Bruck)
-3. feat/dados-mock             (Marcelo)
-4. feat/service-monitoramento  (Marcelo)
-5. feat/tela-login             (Maju)
-6. feat/tela-cadastro          (Maju)
+1. feat/auth-controller    (Bruck)
+2. feat/recursos-controller(Maju)
+3. feat/monit-controller   (Marcelo)
 ```
 
-### Marco de entrega (fim do dia 17)
+(Sem dependência entre eles — cada Controller usa só o próprio Service, então podem ir em
+paralelo e mergear em qualquer ordem.)
 
-- [ ] Abrir o app → TelaLogin aparece
-- [ ] Login com usuário mock (admin@cloud.com / 123) → abre TelaDashboard (pode estar vazia)
-- [ ] Login com senha errada → mostra mensagem de erro
-- [ ] Cadastrar novo usuário → volta pro login → consegue logar com ele
-- [ ] DadosMock popula o sistema automaticamente ao iniciar
+### Detalhe técnico: como o Controller sabe quem é o usuário logado?
+
+Sem login com sessão/token de verdade (que seria complexo demais pro prazo), a abordagem
+mais simples é o front **mandar o id do usuário logado** em cada request que precisa
+(ex: `GET /api/recursos?usuarioId=1`). O front guarda esse id depois do login. Não é seguro
+pra produção real, mas é suficiente e honesto pra um projeto de faculdade — vale anotar essa
+limitação no README.
+
+### Marco de entrega (fim do dia 09/06)
+
+- [ ] `POST /api/login` retorna o usuário (ou erro) — testado
+- [ ] `POST /api/cadastro` cria usuário — testado
+- [ ] CRUD de VM e Storage funcionando via API — testado
+- [ ] Anexar/desanexar disco via API — testado
+- [ ] Endpoints de monitoramento (gerar, listar, críticos) — testados
+- [ ] Toda a API documentada num arquivo `.http` commitado (serve de "manual" pro front)
 
 ---
 
-## Semana 3 — Telas de CRUD (Dias 18–24)
+## Semana 3 — Front, integração e entrega (10/06 – 16/06)
 
-**Objetivo:** Sistema funcional completo — criar, listar, deletar VMs e storages, anexar disco.
+**Objetivo:** ligar tudo. A API inteira já funciona (Semana 2) e o banco já é PostgreSQL
+desde o início, então esta semana é sobre dar **cara** ao sistema: telas HTML/CSS conectadas
+aos endpoints, polish, e a entrega final no banco definitivo.
 
-### Tarefas detalhadas
+### Front — quem faz o quê
 
-#### Bruck
+O **Bruck centraliza o front** (estrutura das telas, CSS comum, organização dos arquivos em
+`resources/static/`), mas **decide o visual junto com Maju e Marcelo** — cada um opina e
+ajuda a ligar a tela da sua própria feature. As telas HTML/CSS são geradas com auxílio de IA;
+o trabalho real da equipe é o **JavaScript de integração** (`fetch` chamando a API e
+mostrando o resultado na tela).
 
-| Branch                       | Tarefa                                                            | Depende de        |
-|------------------------------|-------------------------------------------------------------------|-------------------|
-| `feat/tela-dashboard`        | `TelaDashboard.java` (JFrame principal): JTabbedPane com abas "Minhas VMs", "Meu Storage", "Monitoramento". Se o usuário logado for ADMIN, mostra aba extra "Usuários". Recebe o `Usuario` logado como parâmetro do construtor. | Telas semana 2    |
-| `feat/tela-gerenciar-usuarios`| `TelaGerenciarUsuarios.java`: JTable listando todos os usuários + botões editar/deletar. Só admin acessa. | tela-dashboard    |
+| Branch | Tela / responsável | Liga nos endpoints |
+|--------|--------------------|--------------------|
+| `feat/front-base` | Bruck — estrutura: `index.html`, CSS comum, navegação entre telas, guardar o id do usuário logado após o login | — |
+| `feat/front-login` | Bruck — tela de login + cadastro | `POST /api/login`, `POST /api/cadastro` |
+| `feat/front-recursos` | Maju — tela de VMs e Storage: listar, criar, deletar, anexar/desanexar disco | endpoints de `/api/recursos`, `/api/vms`, `/api/storages`, `/api/discos/*` |
+| `feat/front-monitoramento` | Marcelo — tela de monitoramento: selecionar recurso, gerar métricas, listar críticos (em vermelho) | endpoints de `/api/monitoramento/*` |
 
-#### Maju
+> **Padrão de integração:** cada tela tem um `.js` que usa `fetch('/api/...')`, pega o JSON,
+> e monta o HTML (tabelas, listas) com o resultado. Front e back rodam no mesmo servidor
+> (`localhost:8080`), então não tem CORS pra resolver. O arquivo `.http` da Semana 2 serve de
+> manual: cada endpoint testado lá vira um `fetch` aqui.
 
-| Branch                    | Tarefa                                                              | Depende de      |
-|---------------------------|---------------------------------------------------------------------|-----------------|
-| `feat/painel-vms`         | `PainelVMs.java` (JPanel dentro da aba): JTable mostrando VMs do usuário (nome, CPU, RAM, status). Botões: "Criar VM", "Iniciar", "Parar", "Deletar". | tela-dashboard (Bruck) |
-| `feat/dialog-criar-vm`    | `DialogCriarVM.java` (JDialog): form com nome, qtd CPU, RAM, SO. Chama `RecursoService.criarVM()`. Atualiza a JTable ao fechar. | painel-vms       |
+### Polish e robustez (todos, em paralelo com o front)
 
-#### Marcelo
+| Branch | Quem | Tarefa |
+|--------|------|--------|
+| `feat/front-validacoes` | Maju | Validações nos formulários do front: campo vazio, CPU negativa, email sem @, senha curta, capacidade ≤ 0. Mostrar mensagem clara antes de mandar pro back. |
+| `feat/front-feedback` | Marcelo | Mensagens de sucesso/erro em todas as ações (criar, deletar, anexar, desanexar). Tratamento dos erros que a API retornar. |
+| `feat/polish-visual` | Bruck (com opinião dos outros) | Padronizar visual: alinhamento, cores consistentes, títulos, deixar apresentável. |
 
-| Branch                    | Tarefa                                                              | Depende de      |
-|---------------------------|---------------------------------------------------------------------|-----------------|
-| `feat/painel-storage`     | `PainelStorage.java` (JPanel dentro da aba): JTable mostrando storages do usuário (nome, capacidade, usado, tipo, VM anexada ou "livre"). Botões: "Criar Storage", "Anexar em VM", "Desanexar", "Deletar". | tela-dashboard (Bruck) |
-| `feat/dialog-criar-storage`| `DialogCriarStorage.java` (JDialog): form com nome, capacidade, tipo disco. Opcionalmente já seleciona uma VM pra anexar (JComboBox com VMs do usuário). | painel-storage   |
+### Banco definitivo + entrega final (Bruck)
 
-### Ordem de merges na develop
+| Branch | Tarefa |
+|--------|--------|
+| `feat/entrega-banco-definitivo` | Rodar o app com o perfil `prod` (database `wagaclaud`), confirmar que o `DataLoader` popula o banco definitivo e que tudo funciona igual ao dev. Conferir que a herança JOINED gerou as tabelas certas (`recurso` + filhas com FK). |
+| `feat/bugs-finais` | Testar o fluxo completo de ponta a ponta, corrigir bugs, e fazer o merge final `develop → main`. |
+
+### Ordem sugerida da semana
 
 ```
-1. feat/tela-dashboard                (Bruck - desbloqueia painéis)
-2. feat/painel-vms                    (Maju)
-3. feat/dialog-criar-vm               (Maju)
-4. feat/painel-storage                (Marcelo)
-5. feat/dialog-criar-storage          (Marcelo)
-6. feat/tela-gerenciar-usuarios       (Bruck)
+10–11/06  Front base + login (Bruck)  ·  Maju e Marcelo já ligando suas telas
+12–13/06  Telas de recursos e monitoramento ligadas e funcionando
+14/06     Validações + feedback + polish visual
+15/06     Testar tudo no banco definitivo (wagaclaud), corrigir bugs
+16/06     Merge final develop → main · ENTREGA
 ```
 
-### Marco de entrega (fim do dia 24)
+### Marco de entrega (fim do dia 16/06)
 
-- [ ] Login → Dashboard com abas funcionando
-- [ ] Criar VM → aparece na tabela → Iniciar/Parar muda status → Deletar remove
-- [ ] Criar Storage → aparece na tabela → Anexar em VM → Desanexar → Deletar
-- [ ] Admin vê aba "Usuários" → consegue listar/deletar
-- [ ] Usuário comum NÃO vê aba "Usuários"
-
----
-
-## Semana 4 — Monitoramento + Polish (Dias 25–31)
-
-**Objetivo:** Monitoramento funcionando + sistema polido e apresentável.
-
-### Tarefas detalhadas
-
-#### Bruck
-
-| Branch                    | Tarefa                                                                |
-|---------------------------|-----------------------------------------------------------------------|
-| `feat/painel-monitoramento`| `PainelMonitoramento.java`: selecionar um recurso (JComboBox) → gerar métricas fake → mostrar em JTable. Linhas com `isCritico() == true` ficam em vermelho. Botão "Gerar novas métricas". |
-| `feat/bugs-finais`        | Testar tudo junto, corrigir bugs, merge final `develop → main`.       |
-
-#### Maju
-
-| Branch                    | Tarefa                                                                |
-|---------------------------|-----------------------------------------------------------------------|
-| `feat/polish-telas`       | Melhorar visual das telas: alinhar componentes, padronizar tamanhos de botões, ícones (se quiser), títulos nas janelas, cores consistentes. |
-| `feat/validacoes-forms`   | Adicionar validações nos formulários: campo vazio, CPU negativa, email sem @, senha curta, capacidade de disco <= 0. Mostrar JOptionPane com mensagem clara. |
-
-#### Marcelo
-
-| Branch                    | Tarefa                                                                |
-|---------------------------|-----------------------------------------------------------------------|
-| `feat/mensagens-feedback` | Mensagens de sucesso/erro em todas as ações (criar, deletar, anexar, desanexar). JOptionPane consistente. |
-| `feat/atualizar-diagramas`| Atualizar diagramas no Astah se algo mudou durante a implementação.   |
-| (sem branch)              | Ajudar nos testes e bugs com o Bruck.                                 |
-
-### Marco de entrega (fim do dia 31)
-
-- [ ] Monitoramento funciona: seleciona recurso, gera métricas, mostra críticos em vermelho
-- [ ] Todas as ações têm feedback (sucesso/erro)
-- [ ] Formulários validam inputs inválidos
-- [ ] Telas estão visualmente consistentes
-- [ ] Diagramas refletem o código final
-- [ ] `main` tem a versão final
+- [ ] Login pelo front → guarda o usuário → navega pras telas
+- [ ] Criar/listar/deletar VM e Storage pela tela → reflete no banco
+- [ ] Anexar/desanexar disco pela tela
+- [ ] Monitoramento: gerar métricas, ver críticos em vermelho
+- [ ] Admin vê funcionalidade extra; usuário comum não (permissão)
+- [ ] Validações e mensagens de feedback funcionando
+- [ ] Sistema roda no banco **definitivo** (`wagaclaud`) com dados persistindo de verdade
+- [ ] `main` tem a versão final, com README explicando como rodar (incluindo configurar o banco)
 
 ---
 
 ## Dicas de sobrevivência
 
+### Como ninguém sabe Spring — minimizar o atrito
+
+- O fluxo Controller → Service → Repository é sempre o mesmo padrão. Quando uma feature
+  funcionar ponta-a-ponta (a do Bruck, na Semana 1-2), ela vira o **molde**: as outras duas
+  copiam a estrutura e trocam só a entidade. Não reinvente — copie o que funcionou.
+- Erro do tipo "tabela não existe" ou "coluna não bate" quase sempre é anotação JPA faltando
+  ou `ddl-auto` errado. Confira o profile ativo antes de entrar em pânico.
+- `@Autowired` não funcionou (deu null)? Quase sempre é porque a classe não tem `@Service`,
+  `@RestController` ou `@Repository`, ou está fora do pacote `com.wagaclaud`.
+
 ### Se alguém travar numa tarefa
-1. Tenta por 30 min sozinho (lê o erro, pesquisa).
+
+1. Tenta por 30 min sozinho (lê o erro completo, pesquisa a mensagem exata).
 2. Manda no grupo com print do erro + o que já tentou.
-3. Se não resolver em 1h, faz call rápida.
+3. Se não resolver em 1h, faz call rápida com o Bruck.
 
 ### Se uma dependência atrasar
-Se o Bruck não entregou o Service e a Maju precisa dele pra tela:
-- Maju monta o **layout visual** da tela (arrastar componentes no NetBeans).
-- Deixa os botões com `ActionListener` vazio ou com `System.out.println("TODO: chamar service")`.
-- Quando o Service mergear na develop, ela atualiza a branch dela e conecta.
+
+Se o Bruck não entregou `Recurso`/`Usuario` e Maju/Marcelo precisam:
+- Adiantam o estudo e o esqueleto das próprias classes (atributos, getters/setters).
+- Deixam o `extends Recurso` comentado até a base chegar.
+- Quando a base mergear na develop, atualizam a branch e descomentam.
 
 ### Sync semanal
+
 No mínimo 1x por semana (pode ser na aula de POO2):
 - Cada um mostra o que fez (compartilha tela 2 min).
 - Identifica bloqueios.
 - Ajusta o plano se necessário (edita esse documento!).
 
-### Prioridade se faltar tempo
+---
 
-Se a semana 4 ficar apertada, corte nessa ordem (do menos ao mais importante):
+## Prioridade se faltar tempo
 
-1. ~~Monitoramento~~ → cortar inteiro se precisar
-2. ~~TelaGerenciarUsuarios~~ → admin funciona sem isso
-3. ~~Validações de formulário~~ → feio mas funciona
-4. **CRUD de VM e Storage** → isso é o core, não cortar
-5. **Login** → sem isso não tem projeto
+Se a Semana 3 apertar, corte nessa ordem (do menos ao mais importante):
+
+1. ~~Polish visual~~ → feio mas funciona
+2. ~~Validações de formulário no front~~ → o back ainda valida o essencial
+3. ~~Monitoramento~~ → corta a feature inteira do Marcelo se precisar (ele realoca pro front)
+4. ~~Mensagens de feedback elaboradas~~ → um `alert()` simples resolve
+5. **CRUD de VM e Storage** → isso é o core, não cortar
+6. **Login + cadastro** → sem isso não tem como demonstrar o resto
+7. **Banco SQL (PostgreSQL) funcionando** → requisito OBRIGATÓRIO, nunca cortar
+
+> O que **nunca** sai: o sistema rodando sobre PostgreSQL com as entidades persistindo de
+> verdade. É o requisito da disciplina. Todo o resto é negociável; isso não.
