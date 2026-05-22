@@ -1,0 +1,4 @@
+spring.datasource.url=jdbc:postgresql://localhost:5432/wagaclaud
+spring.datasource.username=postgres
+spring.datasource.password=SUA_SENHA_LOCAL
+spring.jpa.hibernate.ddl-auto=validate

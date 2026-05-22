@@ -48,6 +48,10 @@ trabalho do Controller.
   repository genérico de `Recurso` não conseguiria declarar.
 - **Sem DTO** nesta versão. Os Controllers retornam as entidades direto (decisão de
   simplicidade — pode evoluir depois se sobrar tempo).
+- **Lombok nas entidades:** em vez de escrever getters/setters/construtores à mão, cada
+  entidade usa as anotações do Lombok no topo da classe — tipicamente `@Getter`, `@Setter`,
+  `@NoArgsConstructor` (o JPA exige um construtor sem argumentos). Isso enxuga muito o código.
+  Onde o roadmap diz "Lombok gera getters/setters", é a isso que se refere.
 - **Dois ambientes via profiles do Spring** (mesmo código, configs diferentes):
   - `application-dev.properties` → database `wagaclaud_dev`, `ddl-auto=update` (o JPA
     cria/ajusta as tabelas sozinho conforme as entidades mudam — cômodo durante o dev).
@@ -216,9 +220,16 @@ um projeto de faculdade.
 ### Dependências do `pom.xml` (escolhidas no Spring Initializr)
 
 - **Spring Web** — pra criar os `@RestController`
-- **Spring Data JPA** — pros Repositories e o mapeamento das entidades
+- **Spring Data JPA** — pros Repositories e o mapeamento das entidades (o Hibernate já vem
+  embutido aqui — é ele que implementa o JPA por baixo, não precisa declarar à parte)
 - **PostgreSQL Driver** — pra conectar no banco
+- **Lombok** — gera getters, setters, construtores e mais via anotações (`@Getter`,
+  `@Setter`, `@NoArgsConstructor`, etc.), eliminando código repetitivo nas entidades
 - **Spring Boot DevTools** (opcional) — reinicia o app sozinho quando você salva (acelera o dev)
+
+> **Setup do Lombok no VS Code:** além da dependência no `pom.xml`, instale a extensão
+> "Lombok Annotations Support for VS Code" — sem ela, o editor reclama que os getters/setters
+> "não existem" (mesmo o código compilando), porque o Lombok os gera só na compilação.
 
 ---
 
@@ -233,13 +244,14 @@ deixar o terreno pronto.
 1. **Bruck** gera o projeto no Spring Initializr (`start.spring.io`):
    - Project: **Maven** · Language: **Java** · Spring Boot: **3.x** · Java: **21**
    - Group: `com.wagaclaud` · Artifact: `wagaclaud`
-   - Dependências: **Spring Web**, **Spring Data JPA**, **PostgreSQL Driver**,
+   - Dependências: **Spring Web**, **Spring Data JPA**, **PostgreSQL Driver**, **Lombok**,
      **Spring Boot DevTools**
    - Baixa o `.zip`, descompacta, cria a estrutura de pacotes (model, repository, service,
      controller, config), configura os profiles `dev` e `prod`, e sobe tudo pro GitHub com
      `main` e `develop` criadas.
 2. **Maju e Marcelo** instalam o **JDK 21**, o **VS Code** + extensões ("Extension Pack for
-   Java" e "Spring Boot Extension Pack"), clonam o repo e abrem no VS Code.
+   Java", "Spring Boot Extension Pack" e "Lombok Annotations Support"), clonam o repo e abrem
+   no VS Code.
 3. **Cada um** instala o **PostgreSQL** na própria máquina e cria os dois databases:
    `wagaclaud_dev` (pra desenvolver) e `wagaclaud` (definitivo). Pode usar o pgAdmin (vem
    junto) ou o comando `CREATE DATABASE wagaclaud_dev;`.
@@ -320,7 +332,7 @@ Bruck: Usuario + Recurso  ──┬──► Maju: VirtualMachine + Armazenament
 
 | Branch | Tarefa | Depende de |
 |--------|--------|------------|
-| `feat/auth-model-usuario` | `Usuario` (@Entity): id, nome, email, senha, nivelAcesso (@Enumerated) | enums |
+| `feat/auth-model-usuario` | `Usuario` (@Entity + Lombok): id, nome, email, senha, nivelAcesso (@Enumerated) | enums |
 | `feat/auth-model-recurso` | `Recurso` (@Entity, abstract, @Inheritance JOINED): id, nome, status, dataCriacao, dono (@ManyToOne Usuario), abstract getResumo() | enums |
 | `feat/auth-repository` | `UsuarioRepository extends JpaRepository<Usuario, Integer>` com `findByEmail` | model-usuario |
 | `feat/auth-service` | `AutenticacaoService` (@Service): login(email, senha), cadastrar(Usuario), temPermissao(Usuario, acao). Recebe o repository via @Autowired. | auth-repository |
@@ -338,7 +350,7 @@ Bruck: Usuario + Recurso  ──┬──► Maju: VirtualMachine + Armazenament
 | `feat/recursos-service` | `RecursoService` (@Service): criarVM (já cria o disco padrão), criarStorage, anexarDisco, desanexarDisco, listarRecursos, deletarRecurso. @Autowired dos 2 repositories. Validações básicas. | recursos-repository |
 
 > **Enquanto espera o Bruck:** Maju pode estudar como funciona herança no JPA e deixar o
-> esqueleto das classes pronto (atributos, getters/setters) — só falta o `extends Recurso`
+> esqueleto das classes pronto (atributos + anotações Lombok) — só falta o `extends Recurso`
 > compilar quando a base chegar.
 
 ### Marcelo — feature Monitoramento
@@ -552,7 +564,7 @@ mostrando o resultado na tela).
 ### Se uma dependência atrasar
 
 Se o Bruck não entregou `Recurso`/`Usuario` e Maju/Marcelo precisam:
-- Adiantam o estudo e o esqueleto das próprias classes (atributos, getters/setters).
+- Adiantam o estudo e o esqueleto das próprias classes (atributos + anotações Lombok).
 - Deixam o `extends Recurso` comentado até a base chegar.
 - Quando a base mergear na develop, atualizam a branch e descomentam.
 
