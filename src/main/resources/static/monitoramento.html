@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitoramento — WagaClaud</title>
+  <link rel="stylesheet" href="/css/monitoramento.css" />
+</head>
+<body>
+
+  <h1>📡 <span>Monitoramento</span> — WagaClaud</h1>
+
+  <div id="feedback"></div>
+
+  <div class="actions">
+
+    <div class="card">
+      <h2>Buscar métricas do recurso</h2>
+      <div class="input-row">
+        <input type="number" id="inputListar" placeholder="ID do recurso" min="1" />
+        <button onclick="listarPorRecurso()">Buscar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Gerar métricas fake</h2>
+      <div class="input-row">
+        <input type="number" id="inputGerar" placeholder="ID do recurso" min="1" />
+        <button onclick="gerarMetricas()">Gerar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Métricas críticas (≥ 95%)</h2>
+      <div class="input-row">
+        <button onclick="listarCriticos()" style="width:100%">Ver críticos</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <div class="table-header">
+      <h2 id="tabelaTitulo">Resultados</h2>
+      <span class="badge" id="tabelaBadge">—</span>
+    </div>
+    <div id="tabelaContainer">
+      <p class="empty">Use uma das ações acima para carregar métricas.</p>
+    </div>
+  </div>
+
+  <script src="/js/monitoramento.js"></script>
+</body>
+</html>
