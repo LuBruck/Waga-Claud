@@ -1,6 +1,5 @@
-// Tela após login bem-sucedido. Monitoramento é a única tela pronta hoje;
-// trocar aqui quando a tela de recursos (Maju) entrar.
-const TELA_INICIAL = "/monitoramento.html";
+// Tela após login bem-sucedido — recursos é a home do sistema.
+const TELA_INICIAL = "/recursos.html";
 
 // Se já tem usuário logado guardado, pula direto pra tela inicial.
 if (localStorage.getItem("usuario")) {

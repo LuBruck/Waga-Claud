@@ -4,11 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Monitoramento — WagaClaud</title>
+  <link rel="stylesheet" href="/css/nav.css" />
   <link rel="stylesheet" href="/css/monitoramento.css" />
 </head>
 <body>
 
-  <h1>📡 <span>Monitoramento</span> — WagaClaud</h1>
+  <nav id="nav" class="nav"></nav>
+
+  <h1>📡 <span>Monitoramento</span></h1>
 
   <div id="feedback"></div>
 
@@ -49,6 +52,14 @@
     </div>
   </div>
 
+  <script src="/js/sessao.js"></script>
   <script src="/js/monitoramento.js"></script>
+  <script>
+    // Guarda de sessão + barra de navegação compartilhada.
+    document.addEventListener("DOMContentLoaded", () => {
+      const u = exigirLogin();
+      montarNav(u, "monitoramento");
+    });
+  </script>
 </body>
 </html>
