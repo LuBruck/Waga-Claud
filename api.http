@@ -105,6 +105,28 @@ Content-Type: application/json
   "tipoDisco": "SSD"
 }
 
+### Iniciar uma VM (200) — status vai para ATIVO
+PUT {{baseUrl}}/api/vms/2/iniciar
+
+### Parar uma VM (200) — status vai para PARADO
+PUT {{baseUrl}}/api/vms/2/parar
+
+### Expandir um disco (200) — aumenta a capacidade em N GB
+PUT {{baseUrl}}/api/discos/4/expandir
+Content-Type: application/json
+
+{
+  "gb": 50
+}
+
+### Reduzir um disco (200) — não deixa ficar abaixo do espaço já usado (400 se passar)
+PUT {{baseUrl}}/api/discos/4/reduzir
+Content-Type: application/json
+
+{
+  "gb": 20
+}
+
 ### Anexar um disco solto a uma VM (200)
 # Ajuste discoId/vmId conforme os ids retornados acima.
 PUT {{baseUrl}}/api/discos/anexar

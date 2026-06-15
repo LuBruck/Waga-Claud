@@ -69,9 +69,13 @@ function renderVMs() {
 
   const linhas = vmsCache.map(vm => {
     const qtdDiscos = discosCache.filter(d => d.vmAnexada && d.vmAnexada.id === vm.id).length;
-    const acoes = admin
+    const acaoPower = vm.status === "ATIVO"
+      ? `<button class="btn-sm" onclick="pararVM(${vm.id})">Parar</button>`
+      : `<button class="btn-sm" onclick="iniciarVM(${vm.id})">Iniciar</button>`;
+    const btnDeletarVm = admin
       ? `<button class="btn-sm btn-danger" onclick="deletar(${vm.id}, 'VM')">Deletar</button>`
-      : '<span class="anexo-solto">—</span>';
+      : "";
+    const acoes = acaoPower + btnDeletarVm;
     return `
       <tr>
         <td>${vm.id}</td>
@@ -134,6 +138,10 @@ function renderDiscos() {
       }
     }
 
+    const acaoTamanho =
+      `<button class="btn-sm" onclick="expandir(${d.id})">Expandir</button>` +
+      `<button class="btn-sm" onclick="reduzir(${d.id})">Reduzir</button>`;
+
     const btnDeletar = admin
       ? `<button class="btn-sm btn-danger" onclick="deletar(${d.id}, 'disco')">Deletar</button>`
       : "";
@@ -147,7 +155,7 @@ function renderDiscos() {
         <td>${d.usadoGB}/${d.capacidadeGB} GB</td>
         <td>${anexado}</td>
         ${admin ? `<td class="dono">${escapeHtml(d.dono?.nome ?? "—")}</td>` : ""}
-        <td><div class="row-actions">${acaoAnexo}${btnDeletar}</div></td>
+        <td><div class="row-actions">${acaoTamanho}${acaoAnexo}${btnDeletar}</div></td>
       </tr>`;
   }).join("");
 
@@ -277,6 +285,52 @@ async function desanexar(discoId) {
       return;
     }
     feedback("Disco desanexado (agora está solto).", "success");
+    await carregarRecursos();
+  } catch (e) {
+    feedback("Erro de conexão com o servidor.", "error");
+    console.error(e);
+  }
+}
+
+// ---- ligar / parar VM ----
+
+async function iniciarVM(id) {
+  await acaoSimples(`/api/vms/${id}/iniciar`, "PUT", null, "VM iniciada.");
+}
+
+async function pararVM(id) {
+  await acaoSimples(`/api/vms/${id}/parar`, "PUT", null, "VM parada.");
+}
+
+// ---- expandir / reduzir disco ----
+
+async function expandir(id) {
+  const gb = Number(prompt("Quantos GB deseja adicionar?"));
+  if (!(gb > 0)) return feedback("Informe um valor maior que zero.", "error");
+  await acaoSimples(`/api/discos/${id}/expandir`, "PUT", { gb }, `Disco expandido em ${gb} GB.`);
+}
+
+async function reduzir(id) {
+  const gb = Number(prompt("Quantos GB deseja remover?"));
+  if (!(gb > 0)) return feedback("Informe um valor maior que zero.", "error");
+  await acaoSimples(`/api/discos/${id}/reduzir`, "PUT", { gb }, `Disco reduzido em ${gb} GB.`);
+}
+
+// Helper genérico: dispara a ação, mostra feedback e recarrega a lista.
+async function acaoSimples(url, metodo, body, msgSucesso) {
+  try {
+    const opts = { method: metodo };
+    if (body) {
+      opts.headers = { "Content-Type": "application/json" };
+      opts.body = JSON.stringify(body);
+    }
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+      const msg = await res.text();
+      feedback(`Erro: ${msg || res.status}`, "error");
+      return;
+    }
+    feedback(msgSucesso, "success");
     await carregarRecursos();
   } catch (e) {
     feedback("Erro de conexão com o servidor.", "error");

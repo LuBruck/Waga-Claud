@@ -126,6 +126,42 @@ public class RecursoService {
     }
 
     /**
+     * Liga uma VM (status ATIVO).
+     */
+    public VirtualMachine iniciarVM(Integer vmId) {
+        VirtualMachine vm = buscarVM(vmId);
+        vm.iniciar();
+        return vmRepository.save(vm);
+    }
+
+    /**
+     * Para uma VM (status PARADO).
+     */
+    public VirtualMachine pararVM(Integer vmId) {
+        VirtualMachine vm = buscarVM(vmId);
+        vm.parar();
+        return vmRepository.save(vm);
+    }
+
+    /**
+     * Aumenta a capacidade de um disco em {@code gb} GB.
+     */
+    public Armazenamento expandirDisco(Integer discoId, int gb) {
+        Armazenamento disco = buscarDisco(discoId);
+        disco.expandir(gb);
+        return armazenamentoRepository.save(disco);
+    }
+
+    /**
+     * Reduz a capacidade de um disco em {@code gb} GB (sem ficar abaixo do usado).
+     */
+    public Armazenamento reduzirDisco(Integer discoId, int gb) {
+        Armazenamento disco = buscarDisco(discoId);
+        disco.reduzir(gb);
+        return armazenamentoRepository.save(disco);
+    }
+
+    /**
      * Lista os recursos (VMs + discos) visíveis para o usuário.
      * ADMIN (permissão VER_TODOS_RECURSOS) enxerga os recursos de todo mundo;
      * usuário COMUM enxerga apenas os seus.

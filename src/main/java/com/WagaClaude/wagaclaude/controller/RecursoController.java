@@ -62,6 +62,56 @@ public class RecursoController {
     }
 
     /**
+     * PUT /api/vms/{id}/iniciar — liga a VM (status ATIVO).
+     */
+    @PutMapping("/vms/{id}/iniciar")
+    public ResponseEntity<?> iniciarVM(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(recursoService.iniciarVM(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * PUT /api/vms/{id}/parar — para a VM (status PARADO).
+     */
+    @PutMapping("/vms/{id}/parar")
+    public ResponseEntity<?> pararVM(@PathVariable Integer id) {
+        try {
+            return ResponseEntity.ok(recursoService.pararVM(id));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * PUT /api/discos/{id}/expandir — body: { "gb": 50 }
+     */
+    @PutMapping("/discos/{id}/expandir")
+    public ResponseEntity<?> expandirDisco(@PathVariable Integer id,
+                                           @RequestBody Map<String, Integer> body) {
+        try {
+            return ResponseEntity.ok(recursoService.expandirDisco(id, body.get("gb")));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
+     * PUT /api/discos/{id}/reduzir — body: { "gb": 50 }
+     */
+    @PutMapping("/discos/{id}/reduzir")
+    public ResponseEntity<?> reduzirDisco(@PathVariable Integer id,
+                                          @RequestBody Map<String, Integer> body) {
+        try {
+            return ResponseEntity.ok(recursoService.reduzirDisco(id, body.get("gb")));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    /**
      * PUT /api/discos/anexar — body: { "discoId": 1, "vmId": 2 }
      */
     @PutMapping("/discos/anexar")
