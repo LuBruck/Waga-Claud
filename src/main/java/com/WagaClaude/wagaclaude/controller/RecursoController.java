@@ -3,6 +3,7 @@ package com.WagaClaude.wagaclaude.controller;
 import com.WagaClaude.wagaclaude.model.Armazenamento;
 import com.WagaClaude.wagaclaude.model.Recurso;
 import com.WagaClaude.wagaclaude.model.VirtualMachine;
+import com.WagaClaude.wagaclaude.service.AcessoNegadoException;
 import com.WagaClaude.wagaclaude.service.RecursoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -87,13 +88,17 @@ public class RecursoController {
     }
 
     /**
-     * DELETE /api/recursos/{id} — deleta uma VM ou disco.
+     * DELETE /api/recursos/{id}?usuarioId=1 — deleta uma VM ou disco.
+     * Apenas ADMIN tem permissão; usuário comum recebe 403.
      */
     @DeleteMapping("/recursos/{id}")
-    public ResponseEntity<?> deletarRecurso(@PathVariable Integer id) {
+    public ResponseEntity<?> deletarRecurso(@PathVariable Integer id,
+                                            @RequestParam Integer usuarioId) {
         try {
-            recursoService.deletarRecurso(id);
+            recursoService.deletarRecurso(id, usuarioId);
             return ResponseEntity.noContent().build();
+        } catch (AcessoNegadoException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

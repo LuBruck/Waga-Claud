@@ -27,6 +27,9 @@ public class RecursoService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
+    @Autowired
+    private AutenticacaoService autenticacaoService;
+
     // Capacidade (GB) do disco padrão criado junto com toda VM nova.
     private static final int CAPACIDADE_DISCO_PADRAO = 50;
 
@@ -123,23 +126,38 @@ public class RecursoService {
     }
 
     /**
-     * Lista todos os recursos (VMs + discos) de um usuário.
+     * Lista os recursos (VMs + discos) visíveis para o usuário.
+     * ADMIN (permissão VER_TODOS_RECURSOS) enxerga os recursos de todo mundo;
+     * usuário COMUM enxerga apenas os seus.
      */
     public List<Recurso> listarRecursos(Integer usuarioId) {
-        Usuario dono = buscarUsuario(usuarioId);
+        Usuario solicitante = buscarUsuario(usuarioId);
 
         List<Recurso> recursos = new ArrayList<>();
-        recursos.addAll(vmRepository.findByDono(dono));
-        recursos.addAll(armazenamentoRepository.findByDono(dono));
+        if (autenticacaoService.temPermissao(solicitante, "VER_TODOS_RECURSOS")) {
+            recursos.addAll(vmRepository.findAll());
+            recursos.addAll(armazenamentoRepository.findAll());
+        } else {
+            recursos.addAll(vmRepository.findByDono(solicitante));
+            recursos.addAll(armazenamentoRepository.findByDono(solicitante));
+        }
         return recursos;
     }
 
     /**
      * Deleta um recurso (VM ou disco) pelo id. Ao deletar uma VM, seus discos
      * são desanexados (viram discos soltos) em vez de apagados.
+     *
+     * Só ADMIN pode deletar (permissão DELETAR_RECURSO) — usuário COMUM recebe
+     * {@link AcessoNegadoException}.
      */
     @Transactional
-    public void deletarRecurso(Integer id) {
+    public void deletarRecurso(Integer id, Integer usuarioId) {
+        Usuario solicitante = buscarUsuario(usuarioId);
+        if (!autenticacaoService.temPermissao(solicitante, "DELETAR_RECURSO")) {
+            throw new AcessoNegadoException("Apenas administradores podem deletar recursos");
+        }
+
         VirtualMachine vm = vmRepository.findById(id).orElse(null);
         if (vm != null) {
             for (Armazenamento disco : vm.getDiscos()) {
