@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — WagaClaud</title>
+  <link rel="stylesheet" href="/css/login.css" />
+</head>
+<body>
+
+  <main class="auth-wrapper">
+
+    <header class="brand">
+      <h1>☁️ <span>WagaClaud</span></h1>
+      <p class="subtitle">Gerencie suas máquinas virtuais e armazenamento</p>
+    </header>
+
+    <div id="feedback"></div>
+
+    <!-- abas login / cadastro -->
+    <div class="tabs">
+      <button id="tabLogin" class="tab active" onclick="mostrarLogin()">Entrar</button>
+      <button id="tabCadastro" class="tab" onclick="mostrarCadastro()">Cadastrar</button>
+    </div>
+
+    <!-- formulário de login -->
+    <form id="formLogin" class="card" onsubmit="fazerLogin(event)">
+      <label>
+        E-mail
+        <input type="email" id="loginEmail" placeholder="voce@cloud.com" required />
+      </label>
+      <label>
+        Senha
+        <input type="password" id="loginSenha" placeholder="••••••" required />
+      </label>
+      <button type="submit" class="btn-primary">Entrar</button>
+      <p class="hint">Admin de demonstração: <code>admin@cloud.com</code> / <code>123</code></p>
+    </form>
+
+    <!-- formulário de cadastro -->
+    <form id="formCadastro" class="card hidden" onsubmit="fazerCadastro(event)">
+      <label>
+        Nome
+        <input type="text" id="cadNome" placeholder="Seu nome" required />
+      </label>
+      <label>
+        E-mail
+        <input type="email" id="cadEmail" placeholder="voce@cloud.com" required />
+      </label>
+      <label>
+        Senha
+        <input type="password" id="cadSenha" placeholder="mínimo 3 caracteres" minlength="3" required />
+      </label>
+      <button type="submit" class="btn-primary">Criar conta</button>
+    </form>
+
+  </main>
+
+  <script src="/js/login.js"></script>
+</body>
+</html>
