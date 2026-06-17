@@ -30,12 +30,8 @@ public class RecursoService {
     @Autowired
     private AutenticacaoService autenticacaoService;
 
-    // Capacidade (GB) do disco padrão criado junto com toda VM nova.
     private static final int CAPACIDADE_DISCO_PADRAO = 50;
 
-    /**
-     * Cria uma VM para o usuário e já anexa um disco padrão a ela.
-     */
     @Transactional
     public VirtualMachine criarVM(Integer usuarioId, VirtualMachine vm) {
         Usuario dono = buscarUsuario(usuarioId);
@@ -56,7 +52,6 @@ public class RecursoService {
         vm.setDono(dono);
         VirtualMachine vmSalva = vmRepository.save(vm);
 
-        // Disco padrão que acompanha toda VM nova.
         Armazenamento discoPadrao = new Armazenamento();
         discoPadrao.setNome("Disco padrão - " + vmSalva.getNome());
         discoPadrao.setCapacidadeGB(CAPACIDADE_DISCO_PADRAO);
@@ -69,9 +64,6 @@ public class RecursoService {
         return vmSalva;
     }
 
-    /**
-     * Cria um disco avulso (não anexado a nenhuma VM) para o usuário.
-     */
     public Armazenamento criarStorage(Integer usuarioId, Armazenamento disco) {
         Usuario dono = buscarUsuario(usuarioId);
 
@@ -93,9 +85,6 @@ public class RecursoService {
         return armazenamentoRepository.save(disco);
     }
 
-    /**
-     * Anexa um disco solto a uma VM.
-     */
     public Armazenamento anexarDisco(Integer discoId, Integer vmId) {
         Armazenamento disco = buscarDisco(discoId);
         VirtualMachine vm = buscarVM(vmId);
@@ -111,9 +100,6 @@ public class RecursoService {
         return armazenamentoRepository.save(disco);
     }
 
-    /**
-     * Desanexa um disco da VM em que estava.
-     */
     public Armazenamento desanexarDisco(Integer discoId) {
         Armazenamento disco = buscarDisco(discoId);
 
@@ -125,47 +111,30 @@ public class RecursoService {
         return armazenamentoRepository.save(disco);
     }
 
-    /**
-     * Liga uma VM (status ATIVO).
-     */
     public VirtualMachine iniciarVM(Integer vmId) {
         VirtualMachine vm = buscarVM(vmId);
         vm.iniciar();
         return vmRepository.save(vm);
     }
 
-    /**
-     * Para uma VM (status PARADO).
-     */
     public VirtualMachine pararVM(Integer vmId) {
         VirtualMachine vm = buscarVM(vmId);
         vm.parar();
         return vmRepository.save(vm);
     }
 
-    /**
-     * Aumenta a capacidade de um disco em {@code gb} GB.
-     */
     public Armazenamento expandirDisco(Integer discoId, int gb) {
         Armazenamento disco = buscarDisco(discoId);
         disco.expandir(gb);
         return armazenamentoRepository.save(disco);
     }
 
-    /**
-     * Reduz a capacidade de um disco em {@code gb} GB (sem ficar abaixo do usado).
-     */
     public Armazenamento reduzirDisco(Integer discoId, int gb) {
         Armazenamento disco = buscarDisco(discoId);
         disco.reduzir(gb);
         return armazenamentoRepository.save(disco);
     }
 
-    /**
-     * Lista os recursos (VMs + discos) visíveis para o usuário.
-     * ADMIN (permissão VER_TODOS_RECURSOS) enxerga os recursos de todo mundo;
-     * usuário COMUM enxerga apenas os seus.
-     */
     public List<Recurso> listarRecursos(Integer usuarioId) {
         Usuario solicitante = buscarUsuario(usuarioId);
 
@@ -180,13 +149,6 @@ public class RecursoService {
         return recursos;
     }
 
-    /**
-     * Deleta um recurso (VM ou disco) pelo id. Ao deletar uma VM, seus discos
-     * são desanexados (viram discos soltos) em vez de apagados.
-     *
-     * Só ADMIN pode deletar (permissão DELETAR_RECURSO) — usuário COMUM recebe
-     * {@link AcessoNegadoException}.
-     */
     @Transactional
     public void deletarRecurso(Integer id, Integer usuarioId) {
         Usuario solicitante = buscarUsuario(usuarioId);
@@ -211,8 +173,6 @@ public class RecursoService {
 
         throw new IllegalArgumentException("Recurso não encontrado: id " + id);
     }
-
-    // ---- helpers ----
 
     private Usuario buscarUsuario(Integer usuarioId) {
         return usuarioRepository.findById(usuarioId)

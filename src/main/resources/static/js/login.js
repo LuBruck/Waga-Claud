@@ -1,12 +1,9 @@
-// Tela após login bem-sucedido — recursos é a home do sistema.
 const TELA_INICIAL = "/recursos.html";
 
-// Se já tem usuário logado guardado, pula direto pra tela inicial.
 if (localStorage.getItem("usuario")) {
   window.location.href = TELA_INICIAL;
 }
 
-// ---- alternância entre abas ----
 function mostrarLogin() {
   document.getElementById("formLogin").classList.remove("hidden");
   document.getElementById("formCadastro").classList.add("hidden");
@@ -23,7 +20,6 @@ function mostrarCadastro() {
   limparFeedback();
 }
 
-// ---- login ----
 async function fazerLogin(event) {
   event.preventDefault();
   const email = document.getElementById("loginEmail").value.trim();
@@ -43,7 +39,6 @@ async function fazerLogin(event) {
     }
 
     const usuario = await resp.json();
-    // Guarda o usuário logado — as outras telas leem o id daqui.
     localStorage.setItem("usuario", JSON.stringify(usuario));
     window.location.href = TELA_INICIAL;
   } catch (e) {
@@ -51,7 +46,6 @@ async function fazerLogin(event) {
   }
 }
 
-// ---- cadastro ----
 async function fazerCadastro(event) {
   event.preventDefault();
   const nome = document.getElementById("cadNome").value.trim();
@@ -79,7 +73,6 @@ async function fazerCadastro(event) {
   }
 }
 
-// ---- feedback ----
 function mostrarErro(msg) {
   document.getElementById("feedback").innerHTML =
     `<div class="msg erro">${msg}</div>`;

@@ -8,7 +8,6 @@ body {
   padding: 2rem;
 }
 
-/* ---- formulários de criação ---- */
 .actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -85,7 +84,6 @@ input:focus, select:focus { border-color: #38bdf8; }
   color: #64748b;
 }
 
-/* ---- feedback ---- */
 #feedback {
   display: none;
   padding: 0.75rem 1rem;
@@ -108,7 +106,6 @@ input:focus, select:focus { border-color: #38bdf8; }
   color: #f87171;
 }
 
-/* ---- tabelas ---- */
 .section { margin-bottom: 2rem; }
 
 .table-header {
@@ -163,7 +160,6 @@ tbody tr:hover { background: #232838; }
 
 tbody td { padding: 0.65rem 0.75rem; color: #cbd5e1; vertical-align: middle; }
 
-/* ---- status / tags ---- */
 .status {
   display: inline-block;
   padding: 0.15rem 0.55rem;
@@ -193,7 +189,6 @@ tbody td { padding: 0.65rem 0.75rem; color: #cbd5e1; vertical-align: middle; }
 
 .dono { color: #94a3b8; font-size: 0.8rem; }
 
-/* ---- ações nas linhas ---- */
 .row-actions { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
 
 .btn-sm {

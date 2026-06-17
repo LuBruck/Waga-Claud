@@ -11,13 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
-/**
- * Popula o banco com dados iniciais ao subir o app (substitui o antigo DadosMock).
- *
- * É idempotente: só insere se o banco estiver vazio. Como no perfil dev o
- * {@code ddl-auto=update} mantém os dados entre execuções, isso evita duplicar
- * usuários/recursos a cada boot.
- */
 @Component
 public class DataLoader implements CommandLineRunner {
 
@@ -29,7 +22,6 @@ public class DataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Já populado em alguma execução anterior — não faz nada.
         if (usuarioRepository.count() > 0) {
             System.out.println("[DataLoader] Banco já populado — pulando carga inicial.");
             return;
@@ -37,25 +29,20 @@ public class DataLoader implements CommandLineRunner {
 
         System.out.println("[DataLoader] Banco vazio — inserindo dados iniciais...");
 
-        // ---- Usuários ----
         Usuario admin = criarUsuario("Administrador", "admin@cloud.com", "123", NivelAcesso.ADMIN);
         Usuario maria = criarUsuario("Maria Silva", "maria@cloud.com", "123", NivelAcesso.COMUM);
         Usuario joao = criarUsuario("João Souza", "joao@cloud.com", "123", NivelAcesso.COMUM);
 
-        // ---- VMs (cada criarVM já anexa um disco padrão de 50 GB) ----
         recursoService.criarVM(admin.getId(), montarVM("web-server", 4, 8, "Ubuntu 22.04"));
         recursoService.criarVM(maria.getId(), montarVM("banco-dados", 8, 16, "Debian 12"));
         recursoService.criarVM(joao.getId(), montarVM("app-backend", 2, 4, "Ubuntu 22.04"));
 
-        // ---- Disco solto (não anexado a nenhuma VM) ----
         recursoService.criarStorage(maria.getId(),
                 montarDisco("backup-mensal", 200, 0, TipoDisco.HDD));
 
         System.out.println("[DataLoader] Carga inicial concluída: "
                 + usuarioRepository.count() + " usuários, 3 VMs (com disco padrão) e 1 disco solto.");
     }
-
-    // ---- helpers ----
 
     private Usuario criarUsuario(String nome, String email, String senha, NivelAcesso nivel) {
         Usuario u = new Usuario();

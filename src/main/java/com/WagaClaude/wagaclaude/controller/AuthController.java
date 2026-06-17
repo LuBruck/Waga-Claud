@@ -16,11 +16,6 @@ public class AuthController {
     @Autowired
     private AutenticacaoService autenticacaoService;
 
-    /**
-     * POST /api/login
-     * Body: { "email": "...", "senha": "..." }
-     * Retorna o usuário autenticado (200) ou 401 se as credenciais forem inválidas.
-     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciais) {
         try {
@@ -33,11 +28,6 @@ public class AuthController {
         }
     }
 
-    /**
-     * POST /api/cadastro
-     * Body: objeto Usuario (nome, email, senha, nivelAcesso opcional).
-     * Retorna o usuário criado (201) ou 400 se algo estiver inválido.
-     */
     @PostMapping("/cadastro")
     public ResponseEntity<?> cadastro(@RequestBody Usuario usuario) {
         try {
