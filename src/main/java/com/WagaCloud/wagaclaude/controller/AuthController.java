@@ -1,7 +1,7 @@
-package com.WagaClaude.wagaclaude.controller;
+package com.WagaCloud.wagaclaude.controller;
 
-import com.WagaClaude.wagaclaude.model.Usuario;
-import com.WagaClaude.wagaclaude.service.AutenticacaoService;
+import com.WagaCloud.wagaclaude.model.Usuario;
+import com.WagaCloud.wagaclaude.service.AutenticacaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,8 +1,8 @@
-package com.WagaClaude.wagaclaude.repository;
+package com.WagaCloud.wagaclaude.repository;
 
-import com.WagaClaude.wagaclaude.model.VirtualMachine;
-import com.WagaClaude.wagaclaude.model.Usuario;
-import com.WagaClaude.wagaclaude.model.enums.StatusRecurso;
+import com.WagaCloud.wagaclaude.model.VirtualMachine;
+import com.WagaCloud.wagaclaude.model.Usuario;
+import com.WagaCloud.wagaclaude.model.enums.StatusRecurso;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

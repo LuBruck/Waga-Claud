@@ -1,8 +1,8 @@
-package com.WagaClaude.wagaclaude.service;
+package com.WagaCloud.wagaclaude.service;
 
-import com.WagaClaude.wagaclaude.model.Usuario;
-import com.WagaClaude.wagaclaude.model.enums.NivelAcesso;
-import com.WagaClaude.wagaclaude.repository.UsuarioRepository;
+import com.WagaCloud.wagaclaude.model.Usuario;
+import com.WagaCloud.wagaclaude.model.enums.NivelAcesso;
+import com.WagaCloud.wagaclaude.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

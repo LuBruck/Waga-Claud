@@ -1,10 +1,10 @@
-package com.WagaClaude.wagaclaude.service;
+package com.WagaCloud.wagaclaude.service;
 
-import com.WagaClaude.wagaclaude.model.Monitoramento;
-import com.WagaClaude.wagaclaude.model.Recurso;
-import com.WagaClaude.wagaclaude.repository.ArmazenamentoRepository;
-import com.WagaClaude.wagaclaude.repository.MonitoramentoRepository;
-import com.WagaClaude.wagaclaude.repository.VirtualMachineRepository;
+import com.WagaCloud.wagaclaude.model.Monitoramento;
+import com.WagaCloud.wagaclaude.model.Recurso;
+import com.WagaCloud.wagaclaude.repository.ArmazenamentoRepository;
+import com.WagaCloud.wagaclaude.repository.MonitoramentoRepository;
+import com.WagaCloud.wagaclaude.repository.VirtualMachineRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;

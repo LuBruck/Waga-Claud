@@ -1,6 +1,6 @@
-package com.WagaCloud.wagacloud.model;
+package com.WagaCloud.wagaclaude.model;
 
-import com.WagaCloud.wagacloud.model.enums.StatusRecurso;
+import com.WagaCloud.wagaclaude.model.enums.StatusRecurso;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

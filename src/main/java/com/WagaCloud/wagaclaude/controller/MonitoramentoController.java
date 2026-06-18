@@ -1,7 +1,7 @@
-package com.WagaClaude.wagaclaude.controller;
+package com.WagaCloud.wagaclaude.controller;
 
-import com.WagaClaude.wagaclaude.model.Monitoramento;
-import com.WagaClaude.wagaclaude.service.MonitoramentoService;
+import com.WagaCloud.wagaclaude.model.Monitoramento;
+import com.WagaCloud.wagaclaude.service.MonitoramentoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
