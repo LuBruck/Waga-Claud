@@ -1,4 +1,4 @@
-package com.WagaCloud.wagaclaude.model.enums;
+package com.WagaCloud.wagacloud.model.enums;
 
 public enum NivelAcesso {
     ADMIN,

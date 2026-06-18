@@ -1,12 +1,12 @@
-package com.WagaCloud.wagaclaude.config;
+package com.WagaCloud.wagacloud.config;
 
-import com.WagaCloud.wagaclaude.model.Armazenamento;
-import com.WagaCloud.wagaclaude.model.Usuario;
-import com.WagaCloud.wagaclaude.model.VirtualMachine;
-import com.WagaCloud.wagaclaude.model.enums.NivelAcesso;
-import com.WagaCloud.wagaclaude.model.enums.TipoDisco;
-import com.WagaCloud.wagaclaude.repository.UsuarioRepository;
-import com.WagaCloud.wagaclaude.service.RecursoService;
+import com.WagaCloud.wagacloud.model.Armazenamento;
+import com.WagaCloud.wagacloud.model.Usuario;
+import com.WagaCloud.wagacloud.model.VirtualMachine;
+import com.WagaCloud.wagacloud.model.enums.NivelAcesso;
+import com.WagaCloud.wagacloud.model.enums.TipoDisco;
+import com.WagaCloud.wagacloud.repository.UsuarioRepository;
+import com.WagaCloud.wagacloud.service.RecursoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;

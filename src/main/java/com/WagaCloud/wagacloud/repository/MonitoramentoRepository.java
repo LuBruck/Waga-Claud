@@ -1,6 +1,6 @@
-package com.WagaCloud.wagaclaude.repository;
+package com.WagaCloud.wagacloud.repository;
 
-import com.WagaCloud.wagaclaude.model.Monitoramento;
+import com.WagaCloud.wagacloud.model.Monitoramento;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

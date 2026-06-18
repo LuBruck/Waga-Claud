@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.WagaCloud</groupId>
-	<artifactId>wagaclaude</artifactId>
+	<artifactId>wagacloud</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>

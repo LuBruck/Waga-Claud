@@ -1,10 +1,10 @@
-package com.WagaCloud.wagaclaude.controller;
+package com.WagaCloud.wagacloud.controller;
 
-import com.WagaCloud.wagaclaude.model.Armazenamento;
-import com.WagaCloud.wagaclaude.model.Recurso;
-import com.WagaCloud.wagaclaude.model.VirtualMachine;
-import com.WagaCloud.wagaclaude.service.AcessoNegadoException;
-import com.WagaCloud.wagaclaude.service.RecursoService;
+import com.WagaCloud.wagacloud.model.Armazenamento;
+import com.WagaCloud.wagacloud.model.Recurso;
+import com.WagaCloud.wagacloud.model.VirtualMachine;
+import com.WagaCloud.wagacloud.service.AcessoNegadoException;
+import com.WagaCloud.wagacloud.service.RecursoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

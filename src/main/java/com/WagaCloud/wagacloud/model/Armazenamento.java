@@ -1,6 +1,6 @@
-package com.WagaCloud.wagaclaude.model;
+package com.WagaCloud.wagacloud.model;
 
-import com.WagaCloud.wagaclaude.model.enums.TipoDisco;
+import com.WagaCloud.wagacloud.model.enums.TipoDisco;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
