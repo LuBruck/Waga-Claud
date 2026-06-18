@@ -1,0 +1,169 @@
+###############################################################################
+# WagaClaud — Manual da API REST
+#
+# Use a extensão "REST Client" do VS Code: abra este arquivo e clique em
+# "Send Request" acima de cada bloco. Front e back rodam no mesmo servidor
+# (localhost:8080), então não há CORS.
+#
+# Dados de demonstração criados pelo DataLoader ao subir o app:
+#   id 1 → admin@cloud.com / 123  (ADMIN)
+#   id 2 → maria@cloud.com / 123  (COMUM)  — dona da VM "banco-dados" e do disco solto
+#   id 3 → joao@cloud.com  / 123  (COMUM)  — dono da VM "app-backend"
+#
+# Lembrete: não há sessão/token. O id do usuário logado vai como parâmetro
+# (?usuarioId=) nas rotas que precisam saber quem está agindo.
+###############################################################################
+
+@baseUrl = http://localhost:8080
+
+
+###############################################################################
+# AUTENTICAÇÃO  (AuthController)
+###############################################################################
+
+### Login — sucesso (retorna o usuário, 200)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "admin@cloud.com",
+  "senha": "123"
+}
+
+### Login — credenciais inválidas (401)
+POST {{baseUrl}}/api/login
+Content-Type: application/json
+
+{
+  "email": "admin@cloud.com",
+  "senha": "senha-errada"
+}
+
+### Cadastro — cria usuário COMUM (201). nivelAcesso é opcional (default COMUM).
+POST {{baseUrl}}/api/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Novo Usuário",
+  "email": "novo@cloud.com",
+  "senha": "123"
+}
+
+### Cadastro — email duplicado (400)
+POST {{baseUrl}}/api/cadastro
+Content-Type: application/json
+
+{
+  "nome": "Repetido",
+  "email": "admin@cloud.com",
+  "senha": "123"
+}
+
+
+###############################################################################
+# RECURSOS — VMs e Discos  (RecursoController)
+###############################################################################
+
+### Listar recursos do usuário (200)
+# COMUM (usuarioId=2) vê só os próprios recursos.
+# ADMIN (usuarioId=1) vê os recursos de TODOS os usuários.
+GET {{baseUrl}}/api/recursos?usuarioId=2
+
+### Listar como ADMIN — vê tudo
+GET {{baseUrl}}/api/recursos?usuarioId=1
+
+### Criar VM (201) — já cria um disco padrão de 50 GB anexado
+POST {{baseUrl}}/api/vms?usuarioId=2
+Content-Type: application/json
+
+{
+  "nome": "web-app",
+  "qtdCpu": 4,
+  "memoriaRamGB": 8,
+  "so": "Ubuntu 22.04"
+}
+
+### Criar VM — inválida: CPU <= 0 (400)
+POST {{baseUrl}}/api/vms?usuarioId=2
+Content-Type: application/json
+
+{
+  "nome": "vm-ruim",
+  "qtdCpu": 0,
+  "memoriaRamGB": 8,
+  "so": "Ubuntu 22.04"
+}
+
+### Criar disco avulso (201) — tipoDisco: SSD ou HDD
+POST {{baseUrl}}/api/storages?usuarioId=2
+Content-Type: application/json
+
+{
+  "nome": "disco-extra",
+  "capacidadeGB": 100,
+  "usadoGB": 0,
+  "tipoDisco": "SSD"
+}
+
+### Iniciar uma VM (200) — status vai para ATIVO
+PUT {{baseUrl}}/api/vms/2/iniciar
+
+### Parar uma VM (200) — status vai para PARADO
+PUT {{baseUrl}}/api/vms/2/parar
+
+### Expandir um disco (200) — aumenta a capacidade em N GB
+PUT {{baseUrl}}/api/discos/4/expandir
+Content-Type: application/json
+
+{
+  "gb": 50
+}
+
+### Reduzir um disco (200) — não deixa ficar abaixo do espaço já usado (400 se passar)
+PUT {{baseUrl}}/api/discos/4/reduzir
+Content-Type: application/json
+
+{
+  "gb": 20
+}
+
+### Anexar um disco solto a uma VM (200)
+# Ajuste discoId/vmId conforme os ids retornados acima.
+PUT {{baseUrl}}/api/discos/anexar
+Content-Type: application/json
+
+{
+  "discoId": 4,
+  "vmId": 2
+}
+
+### Desanexar um disco da VM (200) — vira disco solto
+PUT {{baseUrl}}/api/discos/desanexar
+Content-Type: application/json
+
+{
+  "discoId": 4
+}
+
+### Deletar recurso — como ADMIN (204 No Content)
+# Só ADMIN pode deletar (permissão DELETAR_RECURSO).
+# Ao deletar uma VM, seus discos são desanexados (viram soltos), não apagados.
+DELETE {{baseUrl}}/api/recursos/2?usuarioId=1
+
+### Deletar recurso — como COMUM (403 Forbidden)
+DELETE {{baseUrl}}/api/recursos/2?usuarioId=2
+
+
+###############################################################################
+# MONITORAMENTO  (MonitoramentoController)
+###############################################################################
+
+### Gerar métricas fake para um recurso (200)
+# Cria ~10 registros (CPU e RAM) para o recurso informado.
+POST {{baseUrl}}/api/monitoramento/gerar?recursoId=1
+
+### Listar métricas de um recurso (200)
+GET {{baseUrl}}/api/monitoramento/1
+
+### Listar métricas críticas (200) — valor >= 95%
+GET {{baseUrl}}/api/monitoramento/criticos
