@@ -14,17 +14,12 @@ public class AutenticacaoService {
     @Autowired
     private UsuarioRepository usuarioRepository;
 
-    // Ações que só o ADMIN pode executar. Usado por temPermissao().
     private static final Set<String> ACOES_ADMIN = Set.of(
             "DELETAR_RECURSO",
             "VER_TODOS_RECURSOS",
             "GERENCIAR_USUARIOS"
     );
 
-    /**
-     * Valida email + senha. Retorna o usuário autenticado.
-     * Lança IllegalArgumentException se as credenciais não baterem.
-     */
     public Usuario login(String email, String senha) {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Email ou senha inválidos"));
@@ -36,10 +31,6 @@ public class AutenticacaoService {
         return usuario;
     }
 
-    /**
-     * Cadastra um novo usuário após validações básicas.
-     * Lança IllegalArgumentException se algo estiver inválido ou o email já existir.
-     */
     public Usuario cadastrar(Usuario usuario) {
         if (usuario.getNome() == null || usuario.getNome().isBlank()) {
             throw new IllegalArgumentException("Nome é obrigatório");
@@ -54,7 +45,6 @@ public class AutenticacaoService {
             throw new IllegalArgumentException("Já existe um usuário com esse email");
         }
 
-        // Por padrão, todo cadastro novo é usuário comum.
         if (usuario.getNivelAcesso() == null) {
             usuario.setNivelAcesso(NivelAcesso.COMUM);
         }
@@ -62,10 +52,6 @@ public class AutenticacaoService {
         return usuarioRepository.save(usuario);
     }
 
-    /**
-     * Verifica se o usuário tem permissão para executar a ação informada.
-     * ADMIN pode tudo; COMUM pode tudo menos as ações restritas a ADMIN.
-     */
     public boolean temPermissao(Usuario usuario, String acao) {
         if (usuario == null) {
             return false;

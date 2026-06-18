@@ -23,8 +23,12 @@ public class MonitoramentoController {
 
     @PostMapping("/gerar")
     public ResponseEntity<String> gerarMetricas(@RequestParam Integer recursoId) {
-        monitoramentoService.gerarMetricasFakePorId(recursoId);
-        return ResponseEntity.ok("Métricas geradas para o recurso " + recursoId);
+        try {
+            monitoramentoService.gerarMetricasFakePorId(recursoId);
+            return ResponseEntity.ok("Métricas geradas para o recurso " + recursoId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/criticos")

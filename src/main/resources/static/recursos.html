@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recursos — WagaClaud</title>
+  <link rel="stylesheet" href="/css/nav.css" />
+  <link rel="stylesheet" href="/css/recursos.css" />
+</head>
+<body>
+
+  <nav id="nav" class="nav"></nav>
+
+  <div id="feedback"></div>
+
+  <div class="actions">
+
+    <form class="card" onsubmit="criarVM(event)">
+      <h2>Nova máquina virtual</h2>
+      <label>Nome
+        <input type="text" id="vmNome" placeholder="ex: web-app" required />
+      </label>
+      <div class="grid-2">
+        <label>vCPU
+          <input type="number" id="vmCpu" min="1" value="2" required />
+        </label>
+        <label>RAM (GB)
+          <input type="number" id="vmRam" min="1" value="4" required />
+        </label>
+      </div>
+      <label>Sistema operacional
+        <input type="text" id="vmSo" placeholder="ex: Ubuntu 22.04" required />
+      </label>
+      <button type="submit" class="btn-primary">Criar VM</button>
+      <p class="hint">Toda VM nova já vem com um disco padrão de 50 GB.</p>
+    </form>
+
+    <form class="card" onsubmit="criarStorage(event)">
+      <h2>Novo disco</h2>
+      <label>Nome
+        <input type="text" id="discoNome" placeholder="ex: disco-extra" required />
+      </label>
+      <div class="grid-2">
+        <label>Capacidade (GB)
+          <input type="number" id="discoCap" min="1" value="100" required />
+        </label>
+        <label>Usado (GB)
+          <input type="number" id="discoUsado" min="0" value="0" required />
+        </label>
+      </div>
+      <label>Tipo
+        <select id="discoTipo">
+          <option value="SSD">SSD</option>
+          <option value="HDD">HDD</option>
+        </select>
+      </label>
+      <button type="submit" class="btn-primary">Criar disco</button>
+      <p class="hint">O disco nasce solto — depois você pode anexá-lo a uma VM.</p>
+    </form>
+
+  </div>
+
+  <section class="section">
+    <div class="table-header">
+      <h2>Máquinas virtuais</h2>
+      <span class="badge" id="badgeVms">—</span>
+    </div>
+    <div id="vmsContainer">
+      <p class="empty">Carregando…</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="table-header">
+      <h2>Discos</h2>
+      <span class="badge" id="badgeDiscos">—</span>
+    </div>
+    <div id="discosContainer">
+      <p class="empty">Carregando…</p>
+    </div>
+  </section>
+
+  <script src="/js/sessao.js"></script>
+  <script src="/js/recursos.js"></script>
+</body>
+</html>

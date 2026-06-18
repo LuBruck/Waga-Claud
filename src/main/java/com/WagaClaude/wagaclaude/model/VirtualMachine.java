@@ -1,6 +1,7 @@
 package com.WagaClaude.wagaclaude.model;
 
 import com.WagaClaude.wagaclaude.model.enums.StatusRecurso;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,7 @@ public class VirtualMachine extends Recurso {
     @Column(nullable = false)
     private String so;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "vmAnexada")
     private List<Armazenamento> discos = new ArrayList<>();
 
