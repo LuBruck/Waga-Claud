@@ -1,6 +1,6 @@
-package com.WagaClaude.wagaclaude.model;
+package com.WagaCloud.wagacloud.model;
 
-import com.WagaClaude.wagaclaude.model.enums.NivelAcesso;
+import com.WagaCloud.wagacloud.model.enums.NivelAcesso;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

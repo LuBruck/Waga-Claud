@@ -1,4 +1,4 @@
-package com.WagaClaude.wagaclaude.model;
+package com.WagaCloud.wagacloud.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;

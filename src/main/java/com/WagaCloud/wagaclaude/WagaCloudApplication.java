@@ -1,13 +1,13 @@
-package com.WagaClaude.wagaclaude;
+package com.WagaCloud.wagacloud;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class WagaclaudeApplication {
+public class WagacloudApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(WagaclaudeApplication.class, args);
+		SpringApplication.run(WagacloudApplication.class, args);
 	}
 
 }
