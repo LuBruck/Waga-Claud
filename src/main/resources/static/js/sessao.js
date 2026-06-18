@@ -1,8 +1,3 @@
-// Sessão compartilhada entre as telas internas (recursos, monitoramento).
-// Não há token/sessão de verdade: o usuário logado fica no localStorage e o
-// id dele viaja como ?usuarioId= nas rotas que precisam saber quem está agindo.
-
-// Lê o usuário logado. Se não houver, manda de volta pra tela de login.
 function exigirLogin() {
   const bruto = localStorage.getItem("usuario");
   if (!bruto) {
@@ -21,7 +16,6 @@ function logout() {
   window.location.href = "/";
 }
 
-// Monta a barra de navegação no topo. `ativa` = "recursos" ou "monitoramento".
 function montarNav(usuario, ativa) {
   const nav = document.getElementById("nav");
   if (!nav) return;

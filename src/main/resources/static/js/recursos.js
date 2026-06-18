@@ -1,11 +1,7 @@
-// Tela de recursos: lista, cria, deleta VMs e discos, e anexa/desanexa discos.
-// Front e back rodam no mesmo servidor — os fetch usam caminho relativo (/api/...).
-
 const usuario = exigirLogin();
 const usuarioId = usuario ? usuario.id : null;
 const admin = ehAdmin(usuario);
 
-// estado atual carregado da API (usado pra montar o select de anexar)
 let vmsCache = [];
 let discosCache = [];
 
@@ -14,9 +10,6 @@ document.addEventListener("DOMContentLoaded", () => {
   carregarRecursos();
 });
 
-// ---- helpers ----
-
-// O back não manda discriminador de tipo: VM tem qtdCpu, disco tem capacidadeGB.
 function ehVM(r) {
   return r != null && r.qtdCpu !== undefined;
 }
@@ -35,8 +28,6 @@ function feedback(mensagem, tipo) {
   clearTimeout(el._timer);
   el._timer = setTimeout(() => { el.style.display = "none"; }, 4000);
 }
-
-// ---- carregar e renderizar ----
 
 async function carregarRecursos() {
   try {
@@ -120,12 +111,10 @@ function renderDiscos() {
       ? `<span class="anexo-vm">VM '${escapeHtml(d.vmAnexada.nome)}'</span>`
       : '<span class="anexo-solto">solto</span>';
 
-    // Ação de anexar/desanexar
     let acaoAnexo;
     if (d.vmAnexada) {
       acaoAnexo = `<button class="btn-sm" onclick="desanexar(${d.id})">Desanexar</button>`;
     } else {
-      // VMs do mesmo dono que esse disco (admin pode ver de vários donos)
       const vmsCompat = vmsCache.filter(vm => (vm.dono?.id ?? null) === (d.dono?.id ?? null));
       if (vmsCompat.length === 0) {
         acaoAnexo = '<span class="anexo-solto">sem VM compatível</span>';
@@ -171,8 +160,6 @@ function renderDiscos() {
     </table>`;
 }
 
-// ---- criar VM ----
-
 async function criarVM(event) {
   event.preventDefault();
   const nome = document.getElementById("vmNome").value.trim();
@@ -209,8 +196,6 @@ async function criarVM(event) {
   }
 }
 
-// ---- criar disco ----
-
 async function criarStorage(event) {
   event.preventDefault();
   const nome = document.getElementById("discoNome").value.trim();
@@ -246,8 +231,6 @@ async function criarStorage(event) {
     btn.disabled = false;
   }
 }
-
-// ---- anexar / desanexar ----
 
 async function anexar(discoId) {
   const sel = document.getElementById(`anexarSel-${discoId}`);
@@ -292,8 +275,6 @@ async function desanexar(discoId) {
   }
 }
 
-// ---- ligar / parar VM ----
-
 async function iniciarVM(id) {
   await acaoSimples(`/api/vms/${id}/iniciar`, "PUT", null, "VM iniciada.");
 }
@@ -301,8 +282,6 @@ async function iniciarVM(id) {
 async function pararVM(id) {
   await acaoSimples(`/api/vms/${id}/parar`, "PUT", null, "VM parada.");
 }
-
-// ---- expandir / reduzir disco ----
 
 async function expandir(id) {
   const gb = Number(prompt("Quantos GB deseja adicionar?"));
@@ -316,7 +295,6 @@ async function reduzir(id) {
   await acaoSimples(`/api/discos/${id}/reduzir`, "PUT", { gb }, `Disco reduzido em ${gb} GB.`);
 }
 
-// Helper genérico: dispara a ação, mostra feedback e recarrega a lista.
 async function acaoSimples(url, metodo, body, msgSucesso) {
   try {
     const opts = { method: metodo };
@@ -337,8 +315,6 @@ async function acaoSimples(url, metodo, body, msgSucesso) {
     console.error(e);
   }
 }
-
-// ---- deletar (só ADMIN) ----
 
 async function deletar(id, rotulo) {
   if (!confirm(`Tem certeza que deseja deletar ${rotulo} #${id}?`)) return;

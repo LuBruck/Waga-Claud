@@ -26,9 +26,6 @@ public class VirtualMachine extends Recurso {
     @Column(nullable = false)
     private String so;
 
-    // @JsonIgnore: quebra o ciclo VM.discos -> disco.vmAnexada -> VM... que
-    // estourava a serialização de GET /api/recursos. O front conta os discos
-    // de cada VM a partir da própria lista de discos (campo disco.vmAnexada).
     @JsonIgnore
     @OneToMany(mappedBy = "vmAnexada")
     private List<Armazenamento> discos = new ArrayList<>();

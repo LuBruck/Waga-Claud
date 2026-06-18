@@ -27,9 +27,6 @@ public class Armazenamento extends Recurso {
     @JoinColumn(name = "vm_anexada_id")
     private VirtualMachine vmAnexada;
 
-    /**
-     * Aumenta a capacidade do disco em {@code gb} GB.
-     */
     public void expandir(int gb) {
         if (gb <= 0) {
             throw new IllegalArgumentException("A expansão deve ser maior que zero");
@@ -37,10 +34,6 @@ public class Armazenamento extends Recurso {
         this.capacidadeGB += gb;
     }
 
-    /**
-     * Reduz a capacidade do disco em {@code gb} GB, sem deixar a capacidade
-     * abaixo do espaço já usado.
-     */
     public void reduzir(int gb) {
         if (gb <= 0) {
             throw new IllegalArgumentException("A redução deve ser maior que zero");
