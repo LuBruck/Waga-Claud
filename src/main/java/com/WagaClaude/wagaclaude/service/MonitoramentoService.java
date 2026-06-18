@@ -2,7 +2,9 @@ package com.WagaClaude.wagaclaude.service;
 
 import com.WagaClaude.wagaclaude.model.Monitoramento;
 import com.WagaClaude.wagaclaude.model.Recurso;
+import com.WagaClaude.wagaclaude.repository.ArmazenamentoRepository;
 import com.WagaClaude.wagaclaude.repository.MonitoramentoRepository;
+import com.WagaClaude.wagaclaude.repository.VirtualMachineRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,12 @@ public class MonitoramentoService {
 
     @Autowired
     private MonitoramentoRepository monitoramentoRepository;
+
+    @Autowired
+    private VirtualMachineRepository vmRepository;
+
+    @Autowired
+    private ArmazenamentoRepository armazenamentoRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -41,6 +49,13 @@ public class MonitoramentoService {
     }
 
     public void gerarMetricasFakePorId(Integer recursoId) {
+        boolean existe = vmRepository.existsById(recursoId)
+                || armazenamentoRepository.existsById(recursoId);
+
+        if (!existe) {
+            throw new IllegalArgumentException("Recurso não encontrado: id " + recursoId);
+        }
+
         Recurso recurso = entityManager.getReference(Recurso.class, recursoId);
         gerarMetricasFake(recurso);
     }
