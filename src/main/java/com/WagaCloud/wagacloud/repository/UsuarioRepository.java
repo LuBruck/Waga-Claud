@@ -1,6 +1,6 @@
-package com.WagaClaude.wagaclaude.repository;
+package com.WagaCloud.wagacloud.repository;
 
-import com.WagaClaude.wagaclaude.model.Usuario;
+import com.WagaCloud.wagacloud.model.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-# WagaClaud ☁️
+# WagaCloud ☁️
 
 Simulador de uma plataforma de **cloud computing** — gerenciamento de máquinas
 virtuais, discos de armazenamento e monitoramento de recursos. Projeto desenvolvido
@@ -64,8 +64,8 @@ direto, sempre passa pelo Service.
 ### 1. Crie o banco de dados
 
 ```sql
-CREATE DATABASE wagaclaud_dev;   -- desenvolvimento
-CREATE DATABASE wagaclaud;       -- definitivo (opcional)
+CREATE DATABASE wagacloud_dev;   -- desenvolvimento
+CREATE DATABASE wagacloud;       -- definitivo (opcional)
 ```
 
 ### 2. Configure as credenciais
@@ -81,7 +81,7 @@ cp src/main/resources/application-prod.properties.EXEMPO  src/main/resources/app
 Edite `application-dev.properties` e troque `SUA_SENHA_LOCAL` pela senha do seu Postgres:
 
 ```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/wagaclaud_dev
+spring.datasource.url=jdbc:postgresql://localhost:5432/wagacloud_dev
 spring.datasource.username=postgres
 spring.datasource.password=SUA_SENHA_LOCAL
 spring.jpa.hibernate.ddl-auto=update
@@ -178,8 +178,8 @@ Base: `http://localhost:8080`
 ## 📁 Estrutura do projeto
 
 ```
-src/main/java/com/WagaClaude/wagaclaude/
-├── WagaclaudeApplication.java     ← classe main (@SpringBootApplication)
+src/main/java/com/WagaCloud/wagacloud/
+├── WagacloudApplication.java     ← classe main (@SpringBootApplication)
 ├── model/                         ← entidades JPA
 │   ├── enums/                     ← NivelAcesso, StatusRecurso, TipoDisco
 │   ├── Usuario.java

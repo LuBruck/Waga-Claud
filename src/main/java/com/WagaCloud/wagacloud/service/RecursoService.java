@@ -1,13 +1,13 @@
-package com.WagaClaude.wagaclaude.service;
+package com.WagaCloud.wagacloud.service;
 
-import com.WagaClaude.wagaclaude.model.Armazenamento;
-import com.WagaClaude.wagaclaude.model.Recurso;
-import com.WagaClaude.wagaclaude.model.Usuario;
-import com.WagaClaude.wagaclaude.model.VirtualMachine;
-import com.WagaClaude.wagaclaude.model.enums.TipoDisco;
-import com.WagaClaude.wagaclaude.repository.ArmazenamentoRepository;
-import com.WagaClaude.wagaclaude.repository.UsuarioRepository;
-import com.WagaClaude.wagaclaude.repository.VirtualMachineRepository;
+import com.WagaCloud.wagacloud.model.Armazenamento;
+import com.WagaCloud.wagacloud.model.Recurso;
+import com.WagaCloud.wagacloud.model.Usuario;
+import com.WagaCloud.wagacloud.model.VirtualMachine;
+import com.WagaCloud.wagacloud.model.enums.TipoDisco;
+import com.WagaCloud.wagacloud.repository.ArmazenamentoRepository;
+import com.WagaCloud.wagacloud.repository.UsuarioRepository;
+import com.WagaCloud.wagacloud.repository.VirtualMachineRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
